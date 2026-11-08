@@ -50,6 +50,60 @@
   }
 
   // ---------------------------------------------------------------- flows
+  // ---------------------------------------------------------------- back navigation
+  // One hierarchy for the on-screen back button, Escape and the browser / phone Back:
+  // title > cookbook or restaurant > kitchen > dialog. Leaving a kitchen with work in it asks first.
+  G.touched = false;
+  G.hasProgress = function () {
+    if (G.restaurant) return !G.restaurant.ended;
+    if (G.session) return !G.session.done && (G.touched || G.session.idx > 0);
+    return false;
+  };
+  G.requestLeave = function () {
+    if (!G.hasProgress()) {
+      G.action("quit");
+      return;
+    }
+    const service = G.mode === "restaurant";
+    $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
+    $("#leave-sub").textContent = service
+      ? "Today's service is still running. Leaving ends it with no pay for today, and ingredients already used stay used. You can open the same day again."
+      : "This " + (G.session ? G.session.recipe.name.toLowerCase() : "dish") + " is not finished. Leaving clears it; nothing is added to your journal.";
+    $("#btn-stay").textContent = service ? "Keep serving" : "Keep cooking";
+    $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
+    UI.close("pause");
+    G.paused = true;
+    M.audio.stopAllLoops();
+    UI.open("leave");
+  };
+  G.back = function () {
+    const top = UI.topOverlay();
+    if (top) {
+      if (top === "leave") G.action("stay");
+      else if (top === "pause") G.resume();
+      else if (top === "result") G.action("cookbook");
+      else if (top === "day") G.action("manage");
+      else {
+        UI.close(top);
+        if (UI.current === "game" && !UI.topOverlay()) G.paused = false;
+      }
+      return true;
+    }
+    if (UI.current === "game") {
+      G.requestLeave();
+      return true;
+    }
+    if (UI.current === "home" || UI.current === "shop") {
+      M.audio.play("tick");
+      UI.show("title");
+      return true;
+    }
+    return false;
+  };
+  function setBackLabel() {
+    $("#btn-back").setAttribute("aria-label", G.mode === "restaurant" ? "Back to the restaurant" : "Back to the cookbook");
+  }
+
   G.startHome = function (recipeId) {
     M.audio.unlock();
     G.cleanup();
@@ -81,6 +135,8 @@
     G.session.autoplay = G.autoplay;
     UI.renderTicket(G.session);
     G.paused = false;
+    G.touched = false;
+    setBackLabel();
   };
 
   G.startDay = function (role) {
@@ -93,6 +149,8 @@
     UI.enterGame({ kickerLead: "Restaurant", kicker: "day " + M.profile.shop.day, name: names[role], ticket: false, rail: true });
     G.restaurant = new M.Restaurant(role, M.profile.settings.camera);
     G.paused = false;
+    G.touched = false;
+    setBackLabel();
   };
 
   G.cleanup = function () {
@@ -101,7 +159,7 @@
     G.session = null;
     G.restaurant = null;
     M.audio.stopAllLoops();
-    ["pause", "result", "day"].forEach((id) => UI.close(id));
+    ["leave", "pause", "result", "day"].forEach((id) => UI.close(id));
     $("#screen-game").classList.remove("is-cooking");
   };
 
@@ -120,6 +178,10 @@
   G.action = function (a) {
     M.audio.play("tick");
     if (a === "resume") G.resume();
+    else if (a === "stay") {
+      UI.close("leave");
+      G.paused = false;
+    } else if (a === "leave") G.requestLeave();
     else if (a === "restart") {
       UI.close("pause");
       if (G.mode === "home") G.startHome(G.lastRecipe);
@@ -262,6 +324,7 @@
   }
   function route(type, e) {
     if (G.paused || UI.topOverlay()) return;
+    if (type === "down") G.touched = true;
     const p = local(e);
     if (G.session) G.session.pointer(G.view, type, p.x, p.y);
     else if (G.restaurant) G.restaurant.pointer(G.view, type, p.x, p.y);
@@ -279,12 +342,9 @@
   const GAME_KEYS = ["Space", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      const top = UI.topOverlay();
-      if (top === "pause") G.resume();
-      else if (top === "settings" || top === "help") {
-        UI.close(top);
-        if (UI.current === "game" && !UI.topOverlay()) G.paused = false;
-      } else if (!top && UI.current === "game") G.pause();
+      // Escape pauses an active kitchen (the pause sheet offers Leave); everywhere else it is Back.
+      if (!UI.topOverlay() && UI.current === "game") G.pause();
+      else G.back();
       return;
     }
     if (UI.current !== "game" || G.paused || UI.topOverlay()) return;
@@ -296,6 +356,7 @@
     if (GAME_KEYS.includes(e.code)) e.preventDefault();
     if (e.repeat && (e.code === "Space" || e.code === "Enter") && !(G.session && G.session.mg && (G.session.mg instanceof M.MINIGAMES.stir || G.session.mg instanceof M.MINIGAMES.pour))) return;
     M.audio.unlock();
+    G.touched = true;
     if (G.session) G.session.key(e.code, true);
     else if (G.restaurant) G.restaurant.key(e.code, true);
   });
@@ -310,6 +371,39 @@
   window.addEventListener("resize", () => {
     if (UI.current === "game") computeView();
   });
+
+  // ---------------------------------------------------------------- browser and phone Back
+  const Hist = { armed: false, skip: false };
+  function wantsGuard() {
+    return UI.current !== "title" || !!UI.topOverlay();
+  }
+  function syncHistory() {
+    try {
+      if (wantsGuard() && !Hist.armed) {
+        history.pushState({ mise: 1 }, "");
+        Hist.armed = true;
+      } else if (!wantsGuard() && Hist.armed) {
+        // back on the title through the game itself: drop the guard so the next system Back leaves the site
+        Hist.armed = false;
+        Hist.skip = true;
+        history.back();
+      }
+    } catch (err) {
+      Hist.armed = false;
+    }
+  }
+  window.addEventListener("popstate", () => {
+    if (Hist.skip) {
+      Hist.skip = false;
+      return;
+    }
+    if (!Hist.armed) return;
+    Hist.armed = false;
+    G.back();
+    syncHistory();
+  });
+  M.on("screen", () => setTimeout(syncHistory, 0));
+  M.on("overlay", () => setTimeout(syncHistory, 0));
 
   // ---------------------------------------------------------------- test hooks (used by the automated checks)
   window.__mise = {

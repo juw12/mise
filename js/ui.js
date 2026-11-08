@@ -449,6 +449,7 @@
     UI.openStack.push({ id, focus: document.activeElement });
     const f = $("button, input", ov);
     if (f) f.focus();
+    M.emit("overlay", id);
   };
   UI.close = function (id) {
     const ov = $("#ov-" + id);
@@ -460,6 +461,7 @@
       UI.openStack.splice(i, 1);
       if (prev && prev.focus) prev.focus();
     }
+    M.emit("overlay", null);
   };
   UI.topOverlay = function () {
     const o = UI.openStack[UI.openStack.length - 1];
@@ -577,6 +579,7 @@
       ov.addEventListener("click", (e) => {
         if (e.target === ov && ov.id !== "ov-result" && ov.id !== "ov-day") {
           if (ov.id === "ov-pause") M.game.action("resume");
+          else if (ov.id === "ov-leave") M.game.action("stay");
           else UI.close(ov.id.slice(3));
         }
       })
@@ -589,6 +592,10 @@
     $("#btn-cook-m").addEventListener("click", () => M.game.startHome(UI.selectedRecipe));
     $("#btn-open-day").addEventListener("click", () => M.game.startDay(M.profile.shop.role || "server"));
     $("#btn-pause").addEventListener("click", () => M.game.pause());
+    $("#btn-back").addEventListener("click", () => {
+      M.audio.play("tick");
+      M.game.back();
+    });
     $("#btn-sound").addEventListener("click", () => {
       M.game.pause(true);
       UI.open("settings");

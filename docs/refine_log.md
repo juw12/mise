@@ -104,3 +104,14 @@ Meets rubric v1 at 8.55 (3-judge council: Pega-Vision 8.55, Pega-Thinking 7.4, G
 
 ### Sound final
 Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 pass. Baseline snd0 4.45 -> snd1 8.30 -> snd2 8.35 (not kept) -> snd3 8.80. Verified through offline renders of the game's own audio code and spectrogram/metric analysis; no human listening test on real speakers or headphones.
+| 2026-11-08 19:38 | council score | 3.4 | split: - | Pega-Vision=3.4, Pega-Thinking=2.0, GLM-5.3-Flash=4.3 |
+| 2026-11-08 19:56 | council score | 9.55 | split: - | Pega-Vision=9.2, Pega-Thinking=10.0, GLM-5.3-Flash=9.55 |
+
+## Navigation hone (rubric hone/nav-rubric.md, frozen) - trigger: "dont have back button"
+| round | change | gates N1-N7 | council | pairwise | kept | note |
+|---|---|---|---|---|---|---|
+| nav0 | baseline: no back button in the kitchen (only Pause > Leave, no confirm); browser/phone Back leaves the site; Escape does nothing on menus | N1-N5 fail | 3.4 | - | baseline | |
+| nav1 | back arrow in the kitchen top bar; leave-confirm only when work would be lost (exact loss text, safe default); browser/phone Back mirrors the button via one history guard entry (released on the title); Escape = Back on menus | all pass (nav_check N1-N6, check.py G1-G11) | 9.55 | 3-0 vs nav0 | yes (done) | stop: done |
+
+- Judges 9.2 / 9.55 / 10.0. Remaining notes (not required by the rubric): Escape in an active kitchen pauses rather than opening the leave dialog; a service that has not taken any order yet still asks before leaving; a short text label on the phone back button.
+- Verified by tests/nav_check.py in Edge (headless) over http and file://; not tested on a physical phone's hardware Back button.

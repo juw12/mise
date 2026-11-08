@@ -20,12 +20,15 @@ A cozy, ASMR-first cooking game: cook at home at your own pace, or run a small r
 ## Controls
 Mouse or touch everywhere. Keyboard: Space / Enter main action, arrows move the knife or change heat, 1-6 act on tables, Q next guest, P pick up from the pickup counter, K cook (owner), Esc pause.
 
+Back: the arrow at the top left of every screen, Esc on menus, or your browser / phone Back button all go one step up (kitchen > cookbook or restaurant > title). Leaving a dish or a service in progress asks first and says exactly what is lost.
+
 ## Files
 - `index.html`, `css/style.css` - shell and styles (tokens in `design.md`)
 - `js/core.js` storage and profile, `js/audio.js` sound engine, `js/data.js` recipes and economy,
   `js/art.js` illustration, `js/minigames.js` cooking actions, `js/cook.js` cooking session,
   `js/restaurant.js` service simulation, `js/ui.js` screens, `js/main.js` loop and input
 - `tests/check.py` - automated gates (JS errors, every recipe in both views, every role and view, overflow, contrast, no emoji, no purple)
+- `tests/nav_check.py` - navigation gates: back button on every screen, browser/phone Back, Escape, confirm before losing progress
 - `tests/audio_probe.py` - renders every sound offline through the game's own audio code and checks unlock, levels, loudness window and distinctness; writes a spectrogram sheet
 - `docs/` - screenshots, the frozen judging rubric and the improvement log
 
