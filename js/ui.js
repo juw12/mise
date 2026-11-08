@@ -479,6 +479,20 @@
         });
       }
     });
+    const sampler = $("#sampler");
+    if (sampler && !sampler.dataset.bound) {
+      sampler.dataset.bound = "1";
+      const picks = [
+        ["chop-cucumber", "Cucumber"], ["chop-tomato", "Tomato"], ["chop-lettuce", "Lettuce"], ["chop-steak", "Steak"],
+        ["crack", "Egg"], ["loop-sizzle", "Sizzle"], ["loop-pour", "Pour"], ["loop-stir-whisk", "Whisk"],
+        ["loop-boil", "Boil"], ["shake", "Salt"], ["clink", "Plate"], ["ding", "Order bell"],
+      ];
+      sampler.innerHTML = picks.map(([id, label]) => '<button class="btn btn-ghost btn-small" data-preview="' + id + '">' + esc(label) + "</button>").join("");
+      sampler.addEventListener("click", (e) => {
+        const b = e.target.closest("[data-preview]");
+        if (b) M.audio.preview(b.dataset.preview);
+      });
+    }
     bindSegs($("#ov-settings"));
     $("#swatches").innerHTML = M.SKINS.map((c, i) => '<button class="swatch" role="radio" aria-label="Skin tone ' + (i + 1) + '" aria-checked="' + (s.skin === i) + '" data-skin="' + i + '" style="background:' + c + '"></button>').join("");
     $$("[data-skin]").forEach((b) =>

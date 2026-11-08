@@ -61,3 +61,46 @@
 
 ### Final
 Meets rubric v1 at 8.55 (3-judge council: Pega-Vision 8.55, Pega-Thinking 7.4, GLM-5.3-Flash 9.28), all gates pass. Baseline r0 was 7.7 with gate G8 failing.
+| 2026-11-08 10:55 | council score | 4.45 | split: A3 | Pega-Vision=4.7, Pega-Thinking=3.8, GLM-5.3-Flash=4.95 |
+| 2026-11-08 12:00 | council score | 8.3 | split: - | Pega-Vision=8.0, Pega-Thinking=8.8, GLM-5.3-Flash=8.45 |
+
+
+## Sound hone (rubric hone/sound-rubric.md, frozen)
+| round | change | gates S1-S5 | council | pairwise | kept | note |
+|---|---|---|---|---|---|---|
+| snd0 | baseline: one generic chop, mono hits, no room, audio starts only on some buttons | S1 fail, S2 fail, S4 fail | 4.45 | - | baseline | |
+
+### Sound round 1 - changes
+- Per-ingredient knife cuts (9 distinct), tool-specific stir loops (whisk, chopsticks, spatula, tongs, ladle), stereo decorrelated noise, small wooden-room reverb, high-shelf softening, master compressor, per-sound trims.
+- First-gesture unlock anywhere + title hint "Best with headphones"; Settings "Listen" sampler.
+- Gates S1-S5 all pass (S1-S4 on 5 independent renders; check.py G1-G11 pass).
+- Council **8.30** (A1 8, A2 9, A3 8, A4 7, A5 10). Pairwise vs snd0: **B wins 3-0**. Kept (+3.85).
+- r1 fixes: loop beds too loud vs one-shots, hot peaks near ceiling, narrow bells/coins/plate, randomise all one-shots, cucumber crunch buried under knock, chopsticks~ladle closest pair.
+
+| snd1 | per-ingredient cuts, tool loops, room, unlock + sampler | all pass | 8.30 | 3-0 vs snd0 | yes | |
+| 2026-11-08 12:15 | council score | 8.35 | split: - | Pega-Vision=8.35, Pega-Thinking=8.35, GLM-5.3-Flash=8.45 |
+| 2026-11-08 12:28 | council score | 8.8 | split: - | Pega-Vision=8.65, Pega-Thinking=9.1, GLM-5.3-Flash=8.8 |
+
+### Sound round 2 - changes
+- Loop bus ducks to 60 % under every physical one-shot; loops about 3 dB lower; ambience lowpassed at 4.2 kHz.
+- Per-hit level/pitch variation on every physical one-shot; knife trims fixed (keyed per ingredient); bells/coins/plate widened; cucumber crunch-forward; tofu squish tail; tamago body; chopsticks bowl clicks.
+- Gates S1-S5 all pass (S3 9.1 dB, S4 0.131; 5 renders pass). check.py: first run hung in the headless restaurant-page setup (known WebAudio teardown quirk, no output for 60 min); killed and re-run: G1-G11 all pass.
+- Council **8.35** (A1 8, A2 9, A3 8, A4 8, A5 9). Pairwise vs snd1: B wins 3-0.
+- Decision: +0.05 is below the +0.3 keep margin and below the 8.5 done bar -> stall 1 of 2; best stays snd1. snd2 code kept as the working candidate for round 3 (it won the pairwise unanimously). Backup hone/snd2/audio.r2.js.
+
+| snd2 | loop ducking, per-hit variation, level/width fixes | all pass | 8.35 | 3-0 vs snd1 | no (stall 1) | |
+
+### Sound round 3 - changes
+- osc() can pre-pan a partial; tonal hits rendered as detuned left/right pairs (order up width 0.11 -> 1.175, bubble 0.23 -> 0.446, garlic 0.23 -> 0.275, tomato 0.21 -> 0.405).
+- Knife pairs separated: tamago squeak up to 2.3 kHz with spongy body, steak saw down to 1.5 -> 0.95 kHz, garlic crisp 2.2 kHz click + papery 6.5-9.5 kHz skin, tomato low wet body.
+- Textures: crack gets variable shell-grain clouds and an egg-white slide; salt shake denser variable grain clouds + hiss swell (+2.3 dB); sizzle hiss band-limited (centroid 10 kHz -> 4918 Hz) with a warm oil body; boil denser stereo bubbles.
+- Gates S1-S5 all pass (S3 9.6 dB, S4 0.1222; 4 renders: S4 0.107-0.138, S3 9.2-10.4 dB); check.py G1-G11 all pass.
+- Council **8.80** (A1 9, A2 9, A3 8, A4 9, A5 9; judges 8.65 / 9.1 / 8.8). Pairwise vs snd1 (best): **B wins 3-0**; vs snd2: B wins 3-0.
+- Decision: 8.80 >= 8.30 + 0.3 and pairwise win -> **kept**; also meets the done bar (all gates + >= 8.5). Backup hone/snd3/audio.r3.js (identical to live js/audio.js).
+- Stop reason: **done** after 3 of 5 allowed rounds.
+- Open judge notes (not required by the rubric): onion 0.20 and plate 0.24 stereo width still narrow-ish; chopsticks~spatula loops closest pair 0.122.
+
+| snd3 | detuned stereo pairs, knife separation, denser crack/shake/sizzle | all pass | 8.80 | 3-0 vs snd1 | yes (done) | stop: done |
+
+### Sound final
+Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 pass. Baseline snd0 4.45 -> snd1 8.30 -> snd2 8.35 (not kept) -> snd3 8.80. Verified through offline renders of the game's own audio code and spectrogram/metric analysis; no human listening test on real speakers or headphones.

@@ -39,6 +39,7 @@
             <button class="btn btn-ghost" data-open="settings">Settings</button>
           </div>
           <p class="meta">8 recipes / 8 cooking actions / first or third person / sound made live, no recordings</p>
+          <p class="sound-hint" data-sound-hint><span class="ico" data-ico="sound"></span><span data-sound-state>Best with headphones. Sound starts with your first tap.</span></p>
         </div>
         <div class="title-art">
           <canvas id="hero" width="560" height="460" aria-label="A cutting board with sliced cucumber, a tomato and a bowl of beaten egg"></canvas>
@@ -215,6 +216,10 @@
             <label class="slider"><span>Radio</span><input type="range" min="0" max="1" step="0.05" data-slider="radio"></label>
             <label class="toggle"><input type="checkbox" data-toggle="radioOn"><span>Lo-fi radio on</span></label>
             <label class="toggle"><input type="checkbox" data-toggle="captions"><span>Sound captions</span></label>
+            <div class="field">
+              <span class="field-label" id="lbl-sampler">Listen</span>
+              <div class="sampler" id="sampler" role="group" aria-labelledby="lbl-sampler"></div>
+            </div>
           </section>
           <section>
             <h3>Play</h3>

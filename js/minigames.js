@@ -243,7 +243,7 @@
       const juice = this.ing.face || this.ing.color || "rgba(220,235,200,0.9)";
       this.emit(7, x, this.cy - 6, { speed: 170, spread: 2.2, life: 0.5, size: 3.2, color: juice, floor: this.cy + 40 });
       this.emit(3, x, this.cy - 4, { speed: 90, spread: 2.6, life: 0.7, size: 2, color: "rgba(255,255,255,0.85)", floor: this.cy + 40 });
-      M.audio.play("chop", this.pan + (x - S / 2) / 900, 0.8 + Math.random() * 0.3);
+      M.audio.play("chop", this.pan + (x - S / 2) / 900, 0.8 + Math.random() * 0.3, this.step.ing);
       if (this.cuts.length >= this.n) {
         const b = [this.x0].concat(this.cuts.slice().sort((a, c) => a - c), [this.x0 + this.ing.len]);
         const ideal = this.ing.len / (this.n + 1);
@@ -562,6 +562,7 @@
       this.keyHold = false;
       this.toolA = 0;
       this.hint = "Drag in slow circles around the bowl. Hold Space to stir with the keyboard.";
+      this.stirKind = "stir-" + (step.tool || "spoon");
     }
     angleAt(x, y) {
       return Math.atan2((y - this.center.y) / 0.36, x - this.center.x);
@@ -575,7 +576,7 @@
     update(dt) {
       if (this.finishing) {
         this.omega *= 0.9;
-        M.audio.loop("stir", "stir", 0, 0, this.pan);
+        M.audio.loop("stir", this.stirKind, 0, 0, this.pan);
         return;
       }
       if (this.keyHold) this.addAngle(7 * dt, dt);
@@ -584,7 +585,7 @@
         this.totalT += dt;
         if (this.omega >= 2.5 && this.omega <= 14) this.goodT += dt;
       }
-      M.audio.loop("stir", "stir", M.clamp(this.omega / 8, 0, 1), M.clamp(this.omega / 14, 0, 1), this.pan);
+      M.audio.loop("stir", this.stirKind, M.clamp(this.omega / 8, 0, 1), M.clamp(this.omega / 14, 0, 1), this.pan);
       if (this.vessel === "pan") M.audio.loop("sizzle", "sizzle", 0.4, 0.4, this.pan);
       const turns = this.acc / (Math.PI * 2);
       this.status = Math.min(this.need, Math.floor(turns)) + " of " + this.need + " turns";
