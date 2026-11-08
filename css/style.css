@@ -482,3 +482,16 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
 .sound-hint .ico { width: 16px; height: 16px; flex: none; }
 .sampler { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .sampler .btn { min-height: 34px; padding: 0 12px; font-size: 13.5px; }
+
+/* back control: one pill everywhere, arrow + word, same corner */
+.btn-icon[data-back] { width: auto; min-width: 44px; padding: 0 12px 0 8px; gap: 2px; }
+.back-label { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.btn-icon[data-back]:active { transform: translateY(1px); background: var(--line); }
+.btn-icon:focus-visible { outline: 2px solid var(--accent, #B5472B); outline-offset: 2px; }
+.screen-game.is-narrow .btn-icon[data-back] { padding: 0 8px 0 4px; }
+.screen-game.is-narrow .back-label { font-size: 13px; }
+.leave-hint { margin: 12px 0 0; font-size: 13px; text-align: center; }
+@media (max-width: 340px) {
+  .screen-game .back-label { display: none; }
+  .screen-game .btn-icon[data-back] { padding: 0; width: 44px; }
+}

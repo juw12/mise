@@ -115,3 +115,10 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 
 - Judges 9.2 / 9.55 / 10.0. Remaining notes (not required by the rubric): Escape in an active kitchen pauses rather than opening the leave dialog; a service that has not taken any order yet still asks before leaving; a short text label on the phone back button.
 - Verified by tests/nav_check.py in Edge (headless) over http and file://; not tested on a physical phone's hardware Back button.
+| 2026-11-08 22:07 | council score | 9.25 | split: - | Pega-Vision=8.5, Pega-Thinking=10.0, GLM-5.3-Flash=x |
+
+| nav2 | judges' notes acted on: Back pill with the word "Back"; Esc = Back in the kitchen too (asks if work would be lost, second Esc keeps cooking); a service with no orders/takings yet leaves without asking; clearer service loss text ("Day N does not count, so you can play it again"); hint line "Back, Esc or a tap outside also keeps you here" | all pass (nav_check N1-N6 incl. new fresh-service and Esc-mid-dish checks, check.py G1-G11) | 9.25 | 3-0 vs nav1 | yes (done) | |
+
+- Judges 8.5 / 10.0 (GLM-5.3-Flash timed out on the score call; 2-judge quorum). The absolute score is 0.3 below nav1's 9.55, inside judge noise (nav1 range 9.2-10.0); the head-to-head is unanimous for nav2 (3-0, both orderings), so nav2 is kept under the done-bar rule (gates pass, >= 8.5, pairwise win). It does not meet a strict +0.3 margin over 9.55.
+- Remaining notes (optional): keep the word "Back" visible down to 360 px (now hidden at <= 340 px); make the leave-dialog hint a little more prominent.
+- Still not tested on a physical phone's hardware Back button (headless Edge over http and file:// only).

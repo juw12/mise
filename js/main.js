@@ -55,7 +55,11 @@
   // title > cookbook or restaurant > kitchen > dialog. Leaving a kitchen with work in it asks first.
   G.touched = false;
   G.hasProgress = function () {
-    if (G.restaurant) return !G.restaurant.ended;
+    if (G.restaurant) {
+      const r = G.restaurant;
+      // a service only has something to lose once orders, sales or player actions exist
+      return !r.ended && (G.touched || r.tickets.length > 0 || r.served > 0 || r.lost > 0 || r.earned > 0);
+    }
     if (G.session) return !G.session.done && (G.touched || G.session.idx > 0);
     return false;
   };
@@ -67,7 +71,7 @@
     const service = G.mode === "restaurant";
     $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
     $("#leave-sub").textContent = service
-      ? "Today's service is still running. Leaving ends it with no pay for today, and ingredients already used stay used. You can open the same day again."
+      ? "Leaving ends this service now. Today's takings are not paid and ingredients already used are gone. Day " + M.profile.shop.day + " does not count, so you can play it again."
       : "This " + (G.session ? G.session.recipe.name.toLowerCase() : "dish") + " is not finished. Leaving clears it; nothing is added to your journal.";
     $("#btn-stay").textContent = service ? "Keep serving" : "Keep cooking";
     $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
@@ -342,9 +346,8 @@
   const GAME_KEYS = ["Space", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      // Escape pauses an active kitchen (the pause sheet offers Leave); everywhere else it is Back.
-      if (!UI.topOverlay() && UI.current === "game") G.pause();
-      else G.back();
+      // Escape is Back everywhere: closes a dialog, asks before leaving a kitchen with work in it, goes up a screen.
+      G.back();
       return;
     }
     if (UI.current !== "game" || G.paused || UI.topOverlay()) return;

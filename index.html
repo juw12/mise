@@ -50,7 +50,7 @@
     <!-- ============ HOME COOKBOOK ============ -->
     <section id="screen-home" class="screen" aria-labelledby="home-h">
       <header class="page-head">
-        <button class="btn-icon" data-go="title" data-back aria-label="Back to the title screen"><span class="ico" data-ico="back"></span></button>
+        <button class="btn-icon" data-go="title" data-back aria-label="Back to the title screen"><span class="ico" data-ico="back"></span><span class="back-label">Back</span></button>
         <div>
           <p class="kicker">Home kitchen</p>
           <h2 id="home-h">What are we cooking?</h2>
@@ -106,7 +106,7 @@
     <!-- ============ RESTAURANT ============ -->
     <section id="screen-shop" class="screen" aria-labelledby="shop-h">
       <header class="page-head">
-        <button class="btn-icon" data-go="title" data-back aria-label="Back to the title screen"><span class="ico" data-ico="back"></span></button>
+        <button class="btn-icon" data-go="title" data-back aria-label="Back to the title screen"><span class="ico" data-ico="back"></span><span class="back-label">Back</span></button>
         <div>
           <p class="kicker">Restaurant</p>
           <h2 id="shop-h">Corner Counter</h2>
@@ -161,7 +161,7 @@
     <section id="screen-game" class="screen screen-game" aria-label="Kitchen">
       <canvas id="stage"></canvas>
       <header class="hud" id="hud">
-        <button class="btn-icon hud-btn" id="btn-back" data-back aria-label="Back to the cookbook"><span class="ico" data-ico="back"></span></button>
+        <button class="btn-icon hud-btn" id="btn-back" data-back aria-label="Back to the cookbook"><span class="ico" data-ico="back"></span><span class="back-label">Back</span></button>
         <button class="btn-icon hud-btn" id="btn-pause" aria-label="Pause"><span class="ico" data-ico="pause"></span></button>
         <div class="hud-title">
           <span class="kicker" id="hud-kicker">Home kitchen</span>
@@ -210,6 +210,7 @@
           <button class="btn btn-primary btn-block" data-act="stay" id="btn-stay">Keep cooking</button>
           <button class="btn btn-ghost btn-block" data-act="quit" id="btn-leave">Leave</button>
         </div>
+        <p class="muted leave-hint">Back, Esc or a tap outside also keeps you here.</p>
       </div>
     </div>
 

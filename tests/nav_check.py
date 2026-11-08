@@ -171,10 +171,25 @@ def main():
             s2 = state(page)
             if s2["overlay"] or s2["step"] != step_before or s2["screen"] != "game":
                 bad3.append(f"Stay did not restore the dish: {s2}")
-        # restaurant: visible back asks, Leave goes to the restaurant screen
+        # restaurant with nothing at stake yet: back leaves straight to the restaurant screen
         fresh(page, url)
         page.evaluate("window.__mise.startDay('server','third')")
-        page.wait_for_timeout(900)
+        page.wait_for_timeout(400)
+        s0 = state(page)
+        page.locator("#screen-game [data-back]").first.click()
+        page.wait_for_timeout(300)
+        s = state(page)
+        if s0["day"]["tickets"] == 0 and s0["day"]["served"] == 0 and s["screen"] != "shop":
+            bad3.append(f"fresh service back gave {s['screen']}/{s['overlay']} (nothing to lose)")
+        # restaurant with orders in: visible back asks, Leave goes to the restaurant screen
+        fresh(page, url)
+        page.evaluate("window.__mise.startDay('server','third'); window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(60):
+            page.wait_for_timeout(150)
+            d = state(page)["day"]
+            if d["tickets"] > 0 or d["served"] > 0:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
         b = page.locator("#screen-game [data-back]")
         if b.count():
             b.first.click()
@@ -226,7 +241,28 @@ def main():
         s = state(page)
         if s["overlay"] or s["screen"] != "home":
             bad4.append(f"Escape on settings gave {s['screen']}/{s['overlay']}")
-        gate("N4 Escape goes back on home and shop and closes overlays", not bad4, "; ".join(bad4) or "ok")
+        # Escape in a kitchen with work in it opens the same leave dialog; Escape again keeps cooking
+        fresh(page, url)
+        click(page, "#screen-title [data-go=home]")
+        click(page, "#btn-cook")
+        page.evaluate("window.__mise.autoplay(true); window.__mise.speed(4)")
+        for _ in range(40):
+            page.wait_for_timeout(150)
+            if (state(page)["step"] or 0) >= 1:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        step_before = state(page)["step"]
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(250)
+        s = state(page)
+        if s["overlay"] != "leave":
+            bad4.append(f"Escape mid-dish gave overlay {s['overlay']}")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(250)
+        s = state(page)
+        if s["overlay"] or s["screen"] != "game" or s["step"] != step_before:
+            bad4.append(f"second Escape did not keep cooking: {s['screen']}/{s['overlay']} step {s['step']} vs {step_before}")
+        gate("N4 Escape is Back: menus go up, dialogs close, a kitchen with work in it asks first", not bad4, "; ".join(bad4) or "ok")
 
         # ---- N5 file:// still works with history (no SecurityError) and Back from home stays in the game
         fpage = browser.new_page(viewport={"width": 1280, "height": 800})
