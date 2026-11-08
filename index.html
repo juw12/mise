@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F4EFE6">
+  <meta name="description" content="Mise is a quiet cooking game. Cook at home at your own pace, or run a small restaurant as the chef, the server or the owner, in first or third person.">
+  <title>Mise - a quiet kitchen game</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ TITLE ============ -->
+    <section id="screen-title" class="screen is-active" aria-labelledby="title-h">
+      <div class="title-wrap">
+        <div class="title-copy">
+          <h1 id="title-h" class="wordmark">Mise</h1>
+          <p class="lede">A quiet kitchen game. Cook at home at your own pace, or run a small restaurant as the chef, the server or the owner.</p>
+          <div class="modes" role="list">
+            <button class="mode is-primary" data-go="home" role="listitem">
+              <span class="mode-text">
+                <b>Home kitchen</b>
+                <span>No timer, no customers. Eight recipes, rain on the window.</span>
+              </span>
+              <span class="mode-go">Cook <span class="ico" data-ico="arrow"></span></span>
+            </button>
+            <button class="mode" data-go="shop" role="listitem">
+              <span class="mode-text">
+                <b>Restaurant</b>
+                <span id="title-shop-line">Pick a role: chef, server or owner. Days, tips and upgrades.</span>
+              </span>
+              <span class="mode-go">Open <span class="ico" data-ico="arrow"></span></span>
+            </button>
+          </div>
+          <div class="title-actions">
+            <button class="btn btn-primary" id="btn-start">Start cooking</button>
+            <button class="btn btn-ghost" data-open="help">How to play</button>
+            <button class="btn btn-ghost" data-open="settings">Settings</button>
+          </div>
+          <p class="meta">8 recipes / 8 cooking actions / first or third person / sound made live, no recordings</p>
+        </div>
+        <div class="title-art">
+          <canvas id="hero" width="560" height="460" aria-label="A cutting board with sliced cucumber, a tomato and a bowl of beaten egg"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOME COOKBOOK ============ -->
+    <section id="screen-home" class="screen" aria-labelledby="home-h">
+      <header class="page-head">
+        <button class="btn-icon" data-go="title" aria-label="Back to the title screen"><span class="ico" data-ico="back"></span></button>
+        <div>
+          <p class="kicker">Home kitchen</p>
+          <h2 id="home-h">What are we cooking?</h2>
+        </div>
+      </header>
+      <div class="home-grid">
+        <div class="recipe-list" id="recipe-list" role="radiogroup" aria-label="Recipes"></div>
+        <aside class="side-panel">
+          <div class="field">
+            <span class="field-label" id="lbl-cam">View</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-cam" data-setting="camera">
+              <button role="radio" data-value="first">First person</button>
+              <button role="radio" data-value="third">Third person</button>
+            </div>
+            <p class="field-help" id="cam-help"></p>
+          </div>
+          <div class="field">
+            <span class="field-label" id="lbl-tod">Light</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-tod" data-setting="timeOfDay">
+              <button role="radio" data-value="morning">Morning</button>
+              <button role="radio" data-value="evening">Evening</button>
+              <button role="radio" data-value="night">Night</button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-label" id="lbl-amb">Room sound</span>
+            <div class="seg seg-wrap" role="radiogroup" aria-labelledby="lbl-amb" data-setting="ambienceKind">
+              <button role="radio" data-value="rain">Rain</button>
+              <button role="radio" data-value="cafe">Cafe</button>
+              <button role="radio" data-value="fire">Fireplace</button>
+              <button role="radio" data-value="night">Crickets</button>
+              <button role="radio" data-value="off">Off</button>
+            </div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" data-toggle="radioOn">
+            <span>Lo-fi radio</span>
+          </label>
+          <div class="selected-card" id="selected-card"></div>
+          <button class="btn btn-primary btn-block" id="btn-cook">Cook</button>
+          <div class="journal">
+            <h3>Journal</h3>
+            <ol id="journal-list" class="journal-list"></ol>
+          </div>
+        </aside>
+      </div>
+      <div class="mobile-cook">
+        <span id="mobile-cook-name"></span>
+        <button class="btn btn-primary" id="btn-cook-m">Cook</button>
+      </div>
+    </section>
+
+    <!-- ============ RESTAURANT ============ -->
+    <section id="screen-shop" class="screen" aria-labelledby="shop-h">
+      <header class="page-head">
+        <button class="btn-icon" data-go="title" aria-label="Back to the title screen"><span class="ico" data-ico="back"></span></button>
+        <div>
+          <p class="kicker">Restaurant</p>
+          <h2 id="shop-h">Corner Counter</h2>
+        </div>
+        <div class="purse" id="purse"></div>
+      </header>
+      <div class="shop-grid">
+        <section class="shop-open">
+          <div class="stat-row" id="shop-stats"></div>
+          <div class="pantry" id="shop-pantry" aria-label="Pantry stock"></div>
+          <div class="field">
+            <span class="field-label" id="lbl-role">Your role tonight</span>
+            <div class="roles" role="radiogroup" aria-labelledby="lbl-role" id="roles">
+              <button class="role" role="radio" data-role="chef">
+                <b>Chef</b>
+                <span>You cook every ticket. A server looks after the guests.</span>
+              </button>
+              <button class="role" role="radio" data-role="server">
+                <b>Server</b>
+                <span>Seat, take orders, serve, bill. A line cook runs the stove.</span>
+              </button>
+              <button class="role" role="radio" data-role="owner">
+                <b>Owner</b>
+                <span>Both jobs. The room slows down while you cook.</span>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-label" id="lbl-cam2">View</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-cam2" data-setting="camera">
+              <button role="radio" data-value="first">First person</button>
+              <button role="radio" data-value="third">Third person</button>
+            </div>
+            <p class="field-help" id="cam-help-2"></p>
+          </div>
+          <div class="goal" id="goal"></div>
+          <button class="btn btn-primary btn-block" id="btn-open-day">Open for the day</button>
+        </section>
+        <section class="shop-manage" aria-label="Management">
+          <div class="tabs" role="tablist">
+            <button role="tab" data-tab="upgrades" aria-selected="true">Upgrades</button>
+            <button role="tab" data-tab="menu" aria-selected="false">Menu</button>
+            <button role="tab" data-tab="market" aria-selected="false">Market</button>
+            <button role="tab" data-tab="ledger" aria-selected="false">Ledger</button>
+          </div>
+          <div class="tab-body" id="tab-body" role="tabpanel"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- ============ GAME ============ -->
+    <section id="screen-game" class="screen screen-game" aria-label="Kitchen">
+      <canvas id="stage"></canvas>
+      <header class="hud" id="hud">
+        <button class="btn-icon hud-btn" id="btn-pause" aria-label="Pause"><span class="ico" data-ico="pause"></span></button>
+        <div class="hud-title">
+          <span class="kicker" id="hud-kicker">Home kitchen</span>
+          <strong id="hud-name">Rolled omelette</strong>
+        </div>
+        <div class="hud-stats" id="hud-stats"></div>
+        <button class="btn-icon hud-btn" id="btn-sound" aria-label="Sound and settings"><span class="ico" data-ico="sound"></span></button>
+      </header>
+      <aside class="ticket" id="ticket" aria-label="Recipe ticket">
+        <div class="ticket-head">
+          <span class="ticket-no" id="ticket-no">No. 001</span>
+          <span class="ticket-time" id="ticket-time"></span>
+        </div>
+        <h3 class="ticket-name" id="ticket-name"></h3>
+        <ol class="ticket-steps" id="ticket-steps"></ol>
+        <div class="ticket-foot" id="ticket-foot"></div>
+      </aside>
+      <div class="rail" id="rail" aria-label="Order tickets"></div>
+      <div class="hint" id="hint" aria-live="polite">
+        <span class="hint-step" id="hint-step"></span>
+        <span class="hint-text" id="hint-text"></span>
+        <span class="hint-status" id="hint-status"></span>
+      </div>
+      <div class="captions" id="captions" aria-live="polite"></div>
+    </section>
+
+    <!-- ============ OVERLAYS ============ -->
+    <div class="overlay" id="ov-pause" role="dialog" aria-modal="true" aria-labelledby="pause-h" hidden>
+      <div class="sheet sheet-sm">
+        <h2 id="pause-h">Paused</h2>
+        <p class="muted" id="pause-sub">The kitchen will wait.</p>
+        <div class="stack">
+          <button class="btn btn-primary btn-block" data-act="resume">Resume</button>
+          <button class="btn btn-ghost btn-block" data-open="settings">Settings</button>
+          <button class="btn btn-ghost btn-block" data-act="restart">Start over</button>
+          <button class="btn btn-ghost btn-block" data-act="quit">Leave the kitchen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-settings" role="dialog" aria-modal="true" aria-labelledby="settings-h" hidden>
+      <div class="sheet">
+        <div class="sheet-head">
+          <h2 id="settings-h">Settings</h2>
+          <button class="btn-icon" data-close aria-label="Close settings"><span class="ico" data-ico="close"></span></button>
+        </div>
+        <div class="settings-grid">
+          <section>
+            <h3>Sound</h3>
+            <label class="slider"><span>Master</span><input type="range" min="0" max="1" step="0.05" data-slider="master"></label>
+            <label class="slider"><span>Cooking sounds</span><input type="range" min="0" max="1" step="0.05" data-slider="fx"></label>
+            <label class="slider"><span>Room sound</span><input type="range" min="0" max="1" step="0.05" data-slider="ambience"></label>
+            <label class="slider"><span>Radio</span><input type="range" min="0" max="1" step="0.05" data-slider="radio"></label>
+            <label class="toggle"><input type="checkbox" data-toggle="radioOn"><span>Lo-fi radio on</span></label>
+            <label class="toggle"><input type="checkbox" data-toggle="captions"><span>Sound captions</span></label>
+          </section>
+          <section>
+            <h3>Play</h3>
+            <label class="toggle"><input type="checkbox" data-toggle="hints"><span>Guides and target outlines</span></label>
+            <label class="toggle"><input type="checkbox" data-toggle="reduceMotion"><span>Reduce motion</span></label>
+            <div class="field">
+              <span class="field-label" id="lbl-skin">Hands</span>
+              <div class="swatches" role="radiogroup" aria-labelledby="lbl-skin" id="swatches"></div>
+            </div>
+            <div class="field">
+              <span class="field-label">Progress</span>
+              <p class="field-help" id="save-note"></p>
+              <button class="btn btn-ghost" id="btn-reset">Reset all progress</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-help" role="dialog" aria-modal="true" aria-labelledby="help-h" hidden>
+      <div class="sheet">
+        <div class="sheet-head">
+          <h2 id="help-h">How to play</h2>
+          <button class="btn-icon" data-close aria-label="Close"><span class="ico" data-ico="close"></span></button>
+        </div>
+        <div class="help-grid">
+          <section>
+            <h3>Cooking</h3>
+            <dl class="defs">
+              <dt>Slice</dt><dd>Aim along the dashed guides and click or tap. Even slices score best.</dd>
+              <dt>Crack</dt><dd>Tap when the needle sits in the green band, then tap again to open.</dd>
+              <dt>Pour</dt><dd>Hold, and let go inside the green band.</dd>
+              <dt>Stir</dt><dd>Drag slow circles around the bowl or hold Space.</dd>
+              <dt>Fry</dt><dd>Wait for golden, then tap the pan to flip or take it off.</dd>
+              <dt>Boil</dt><dd>Drop it in, lift it out in the green band.</dd>
+              <dt>Season</dt><dd>Tap to shake. Stop in the band and press Done.</dd>
+              <dt>Plate</dt><dd>Drag each item onto its outline, or tap item then plate.</dd>
+            </dl>
+          </section>
+          <section>
+            <h3>Restaurant</h3>
+            <dl class="defs">
+              <dt>Server</dt><dd>Tap a guest in the queue, then a table. Tap tables to take orders, serve and collect. Tap dishes on the pickup counter to carry them (two at a time). Repeating the same action earns a chain bonus.</dd>
+              <dt>Chef</dt><dd>Pick a ticket from the rail and cook it. Faster and better dishes earn bigger tips.</dd>
+              <dt>Owner</dt><dd>Both jobs. Tap the stove or a ticket to cook; the room slows while you do.</dd>
+            </dl>
+            <h3>Keys</h3>
+            <dl class="defs">
+              <dt>Space / Enter</dt><dd>Main action in every cooking step</dd>
+              <dt>Arrows</dt><dd>Move the knife, change heat</dd>
+              <dt>1 to 6</dt><dd>Act on a table (server and owner); Q picks the next guest, P picks up from the pickup counter, K cooks (owner)</dd>
+              <dt>Esc</dt><dd>Pause</dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-result" role="dialog" aria-modal="true" aria-labelledby="result-h" hidden>
+      <div class="sheet sheet-result">
+        <div class="result-art"><img id="result-img" alt=""></div>
+        <div class="result-body">
+          <p class="kicker" id="result-kicker">Plated</p>
+          <h2 id="result-h"></h2>
+          <p class="result-score"><span id="result-pct"></span><span id="result-word"></span></p>
+          <ol class="result-notes" id="result-notes"></ol>
+          <p class="muted" id="result-saved"></p>
+          <div class="row">
+            <button class="btn btn-primary" data-act="again">Cook it again</button>
+            <button class="btn btn-ghost" data-act="cookbook">Back to the cookbook</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="ov-day" role="dialog" aria-modal="true" aria-labelledby="day-h" hidden>
+      <div class="sheet sheet-sm">
+        <p class="kicker" id="day-kicker">Closing time</p>
+        <h2 id="day-h"></h2>
+        <div class="stars" id="day-stars" aria-hidden="true"></div>
+        <p class="sr-only" id="day-stars-sr"></p>
+        <dl class="day-figures" id="day-figures"></dl>
+        <div class="stack">
+          <button class="btn btn-primary btn-block" data-act="manage">Manage the restaurant</button>
+          <button class="btn btn-ghost btn-block" data-act="title">Back to the title screen</button>
+        </div>
+      </div>
+    </div>
+
+    <noscript><p class="noscript">Mise needs JavaScript to run.</p></noscript>
+  </div>
+
+  <script src="js/core.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/minigames.js"></script>
+  <script src="js/cook.js"></script>
+  <script src="js/restaurant.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
