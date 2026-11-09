@@ -118,19 +118,32 @@
       "You can cook it again from the cookbook.";
     return { lead, detail };
   };
-  G.requestLeave = function () {
+  // intent "quit" leaves to the cookbook / restaurant; "restart" starts the same dish or day over
+  G.requestLeave = function (intent) {
+    intent = intent || "quit";
     if (!G.hasProgress()) {
-      G.action("quit");
+      G.leaveIntent = null;
+      G.action(intent === "restart" ? "restart-now" : "quit");
       return;
     }
+    G.leaveIntent = intent;
     const service = G.mode === "restaurant";
+    const restart = intent === "restart";
     if (G.hideBackTip) G.hideBackTip();
-    $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
+    if (restart) $("#leave-h").textContent = service ? "Start the service over?" : "Start this dish over?";
+    else $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
     const copy = G.leaveCopy();
+    let detail = copy.detail;
+    if (restart) {
+      detail = detail
+        .replace(/You can play Day (\d+) again\.$/, "Day $1 starts again from the opening.")
+        .replace("You can cook it again from the cookbook.", "The dish starts again from step 1.");
+    }
     $("#leave-lead").textContent = copy.lead;
-    $("#leave-detail").textContent = copy.detail;
+    $("#leave-detail").textContent = detail;
     $("#btn-stay").textContent = service ? "Keep serving" : "Keep cooking";
-    $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
+    if (restart) $("#btn-leave").textContent = service ? "Start the day over" : "Start the dish over";
+    else $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
     UI.close("pause");
     G.paused = true;
     M.audio.stopAllLoops();
@@ -235,7 +248,7 @@
       window.removeEventListener("keydown", hide, true);
     };
     G.hideBackTip = hide;
-    G.backTipTimer = setTimeout(hide, 6000);
+    // no timer: the note waits for the first touch or key, so a player who looked away still sees it
     window.addEventListener("pointerdown", hide, true);
     window.addEventListener("keydown", hide, true);
   };
@@ -274,14 +287,21 @@
     if (a === "resume") G.resume();
     else if (a === "dialog-back") G.back();
     else if (a === "stay") {
+      G.leaveIntent = null;
       UI.close("leave");
       G.paused = false;
     } else if (a === "leave") G.requestLeave();
-    else if (a === "restart") {
+    else if (a === "restart") G.requestLeave("restart");
+    else if (a === "restart-now") {
+      G.leaveIntent = null;
+      UI.close("leave");
       UI.close("pause");
       if (G.mode === "home") G.startHome(G.lastRecipe);
       else G.startDay(M.profile.shop.role || "server");
+    } else if (a === "quit" && G.leaveIntent === "restart") {
+      G.action("restart-now");
     } else if (a === "quit") {
+      G.leaveIntent = null;
       const wasShop = G.mode === "restaurant";
       // after a finished day, Back lands on Manage, the same place the day summary leads to
       if (wasShop && G.restaurant && G.restaurant.ended) UI.tab = "upgrades";

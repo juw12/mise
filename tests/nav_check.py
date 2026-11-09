@@ -579,7 +579,13 @@ def main():
           return { repStart: r.repStart, used: r.stockUsed, stock };
         }""")
         page.evaluate("window.Mise.game.pause(); window.Mise.game.action('restart')")
-        page.wait_for_timeout(400)
+        page.wait_for_timeout(300)
+        ask = page.evaluate("[window.__mise.state().overlay, document.getElementById('leave-h').textContent, document.getElementById('btn-leave').textContent]")
+        if ask[0] != "leave" or "over" not in ask[1]:
+            bad9.append(f"Start over with a served table did not ask first: {ask}")
+        else:
+            click(page, "#btn-leave")
+        page.wait_for_timeout(300)
         after = page.evaluate("""() => {
           const s = window.__mise.M.profile.shop;
           const r = window.Mise.game.restaurant;
@@ -679,7 +685,7 @@ def main():
             if not info:
                 bad12.append(f"no Back button inside the {kind} dialog")
                 continue
-            if not info["visible"] or info["h"] < 40 or info["text"] != "Back" or info["w"] > 140:
+            if not info["visible"] or info["h"] < 44 or info["text"] != "Back" or info["w"] > 140 or not info["label"].startswith("Back to "):
                 bad12.append(f"{kind} Back not a visible 40 px pill reading Back: {info}")
             if info["top"] > 90:
                 bad12.append(f"{kind} Back not at the top of the sheet (top offset {info['top']:.0f} px)")
@@ -693,7 +699,55 @@ def main():
             if kind == "result":
                 page.screenshot(path=str(OUT / "result-back-closed.png"))
         results["n4f_bad"] = bad12
-        gate("N4f the dish result and day summary carry their own Back pill (40 px, top of the sheet, not the default focus) that closes the dialog one level up", not bad12, "; ".join(bad12) or "ok")
+        gate("N4f the dish result and day summary carry their own Back pill (44 px like the top bar, label 'Back to ...', top of the sheet, not the default focus) that closes the dialog one level up", not bad12, "; ".join(bad12) or "ok")
+
+        # ---- N3d Pause > Start over asks first when work would be lost (same dialog, safe choice focused)
+        bad13 = []
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.saveProfile()")
+        page.evaluate("window.__mise.startHome('salad','first')")
+        page.wait_for_timeout(600)
+        page.evaluate("window.Mise.game.pause(); window.Mise.game.action('restart')")
+        page.wait_for_timeout(300)
+        if state(page)["overlay"]:
+            bad13.append(f"Start over on an untouched dish asked anyway (overlay {state(page)['overlay']})")
+        page.evaluate("window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(120):
+            page.wait_for_timeout(150)
+            if state(page)["step"] >= 1:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        step_before = state(page)["step"]
+        page.evaluate("window.Mise.game.pause(); window.Mise.game.action('restart')")
+        page.wait_for_timeout(300)
+        ask = page.evaluate("""() => ({
+          overlay: window.__mise.state().overlay,
+          head: document.getElementById('leave-h').textContent,
+          detail: document.getElementById('leave-detail').textContent,
+          go: document.getElementById('btn-leave').textContent,
+          focus: document.activeElement && document.activeElement.id,
+        })""")
+        if ask["overlay"] != "leave" or ask["head"] != "Start this dish over?":
+            bad13.append(f"Start over mid-dish did not ask first: {ask}")
+        if "starts again from step 1" not in ask["detail"] or ask["go"] != "Start the dish over":
+            bad13.append(f"restart wording wrong: {ask}")
+        if ask["focus"] != "btn-stay":
+            bad13.append(f"restart question opened on {ask['focus']} (want Keep cooking)")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+        s = state(page)
+        if s["overlay"] or s["step"] != step_before:
+            bad13.append(f"Esc on the restart question lost progress: overlay={s['overlay']} step {step_before}->{s['step']}")
+        page.evaluate("window.Mise.game.pause(); window.Mise.game.action('restart')")
+        page.wait_for_timeout(300)
+        if state(page)["overlay"] == "leave":
+            click(page, "#btn-leave")
+        page.wait_for_timeout(400)
+        s = state(page)
+        if s["screen"] != "game" or s["overlay"] or s["step"] != 0:
+            bad13.append(f"Start the dish over gave {s['screen']}/{s['overlay']} step {s['step']} (want the same dish at step 1)")
+        results["n3d_bad"] = bad13
+        gate("N3d Pause > Start over asks first when work would be lost (exact words, safe choice focused, Esc keeps progress), restarts at once when nothing would be lost", not bad13, "; ".join(bad13) or "ok")
 
         # ---- N4e focus returns to the control that opened a dialog
         bad10 = []

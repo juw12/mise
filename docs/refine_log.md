@@ -165,3 +165,13 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 - New gates: N3c (leaving mid-dish changes no coins, ingredients, journal or cooked counts), N4f (in-dialog Back pill), G8b (arrow tap lands on a guide; holding glides). All 15 nav gates + 14 check gates pass.
 - Judge notes queued for nav9: make the dialog pill identical to the top-bar pill (44 px, destination-style label), confirm Pause > Restart day with exact loss text, first-visit note should not vanish on a timer.
 
+| 2026-11-09 13:02 | council score | 9.7 | split: - | Pega-Vision=9.3, Pega-Thinking=10.0, GLM-5.3-Flash=9.7 |
+
+
+## nav9 - kept (council 9.7, judges 9.3-10; pairwise 3-0 over nav8)
+- Pause > Start over now asks first when work would be lost (same dialog and exact accounting words as leaving, safe choice focused, Esc keeps playing); restarts at once when nothing would be lost.
+- Dialog Back pill made identical to the top-bar pill (44 px, same styling, destination-style label 'Back to your finished plate' / 'Back to the closed floor').
+- First-visit Back note no longer vanishes on a 6 s timer; it waits for the first touch or key.
+- New gate N3d; N3b and N4f updated. 16 nav gates + 14 check gates pass.
+- Remaining notes: physical-device checklist (needs the user), 320 px dialog layout check, mutation-test N2b, subjective note weight / outside-tap preferences.
+
