@@ -543,6 +543,20 @@ def main():
             if s["screen"] != "title":
                 bad8.append(f"cycle {cycle}: system Back from the cookbook gave {s['screen']} (want title)")
                 break
+        # the exact race, forced: back to the title and straight into the cookbook in the same task,
+        # so the cookbook opens while the game's own history.back() is still in flight
+        for attempt in range(3):
+            fresh(page, url)
+            page.evaluate("window.Mise.ui.show('home')")
+            page.wait_for_timeout(300)
+            page.evaluate("window.Mise.ui.show('title'); window.Mise.ui.show('home')")
+            page.wait_for_timeout(500)
+            back(page)
+            s = state(page)
+            if s["screen"] != "title" or not page.url.startswith(url.rstrip("/")):
+                bad8.append(f"forced race {attempt}: system Back from the reopened cookbook gave {s['screen']} at {page.url} (want title, still in the game)")
+                break
+        fresh(page, url)
         # rapid double system Back from the restaurant: one level per press, never past the title
         page.evaluate("window.Mise.ui.show('shop')")
         page.wait_for_timeout(300)
@@ -748,6 +762,68 @@ def main():
             bad13.append(f"Start the dish over gave {s['screen']}/{s['overlay']} step {s['step']} (want the same dish at step 1)")
         results["n3d_bad"] = bad13
         gate("N3d Pause > Start over asks first when work would be lost (exact words, safe choice focused, Esc keeps progress), restarts at once when nothing would be lost", not bad13, "; ".join(bad13) or "ok")
+
+        # ---- N1c every Back-related dialog fits small phones (320 and 390 px): no sideways overflow, all buttons reachable
+        bad14 = []
+        small = browser.new_page(viewport={"width": 320, "height": 640})
+        small.on("pageerror", lambda err: errors.append(str(err)[:200]))
+        for width, height in ((320, 640), (390, 844)):
+            small.set_viewport_size({"width": width, "height": height})
+            fresh(small, url)
+            small.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.profile.shop.day = 3; window.__mise.M.saveProfile()")
+            small.evaluate("window.__mise.startDay('server','third'); window.__mise.autoplay(true); window.__mise.speed(6)")
+            for _ in range(120):
+                small.wait_for_timeout(150)
+                if state(small)["day"]["served"] >= 1:
+                    break
+            small.evaluate("window.__mise.autoplay(false); window.__mise.speed(1); const r = window.Mise.game.restaurant; r.lost += 1")
+            def measure(name, overlay):
+                info = small.evaluate("""(id) => {
+                  const ov = document.getElementById('ov-' + id);
+                  const sheet = ov.querySelector('.sheet');
+                  const r = sheet.getBoundingClientRect();
+                  const buttons = [...ov.querySelectorAll('button')].filter((b) => b.offsetParent);
+                  const unreachable = buttons.filter((b) => {
+                    b.scrollIntoView({ block: 'nearest' });
+                    const br = b.getBoundingClientRect();
+                    return br.left < 0 || br.right > innerWidth + 0.5 || br.top < 0 || br.bottom > innerHeight + 0.5 || br.height < 40;
+                  }).map((b) => b.textContent.trim());
+                  return {
+                    left: r.left, right: r.right, vw: innerWidth,
+                    sideways: sheet.scrollWidth > sheet.clientWidth + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+                    unreachable,
+                  };
+                }""", overlay)
+                if info["left"] < 0 or info["right"] > info["vw"] + 0.5 or info["sideways"] or info["unreachable"]:
+                    bad14.append(f"{width}px {name}: {info}")
+                small.screenshot(path=str(OUT / f"small-{width}-{name}.png"))
+            small.evaluate("window.Mise.game.requestLeave('restart')")
+            small.wait_for_timeout(300)
+            measure("restart-service", "leave")
+            small.evaluate("window.Mise.game.action('stay'); window.Mise.game.requestLeave('quit')")
+            small.wait_for_timeout(300)
+            measure("leave-service", "leave")
+            small.evaluate("window.Mise.game.action('stay'); window.Mise.game.restaurant.endDay()")
+            for _ in range(20):
+                small.wait_for_timeout(150)
+                if state(small)["overlay"] == "day":
+                    break
+            measure("day-summary", "day")
+            fresh(small, url)
+            small.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.saveProfile()")
+            small.evaluate("window.__mise.startHome('tamagoyaki','first'); window.__mise.autoplay(true); window.__mise.speed(6)")
+            for _ in range(240):
+                small.wait_for_timeout(150)
+                if state(small)["overlay"] == "result":
+                    break
+            small.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+            if state(small)["overlay"] == "result":
+                measure("dish-result", "result")
+            else:
+                bad14.append(f"{width}px dish result never appeared")
+        small.close()
+        results["n1c_bad"] = bad14
+        gate("N1c leave, start-over, dish result and day summary dialogs fit 320 and 390 px phones (no sideways overflow, every button reachable and 40 px tall)", not bad14, "; ".join(bad14) or "ok")
 
         # ---- N4e focus returns to the control that opened a dialog
         bad10 = []

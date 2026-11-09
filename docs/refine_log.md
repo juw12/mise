@@ -175,3 +175,11 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 - New gate N3d; N3b and N4f updated. 16 nav gates + 14 check gates pass.
 - Remaining notes: physical-device checklist (needs the user), 320 px dialog layout check, mutation-test N2b, subjective note weight / outside-tap preferences.
 
+
+
+## nav10 - verification only (no game changes); pairwise vs nav9: 0-1-2 (tie) -> hone stop
+- New gate N1c: leave / start-over / dish result / day summary dialogs fit 320 and 390 px phones with the longest Day 3 loss text (no sideways overflow, every button reachable and >= 40 px). PASS.
+- N2b now also forces the history race (same task and 1-40 ms apart). PASS.
+- Mutation test (honest correction of the nav7 claim): with the history-guard change removed, N2b still passes even with the race forced, so in Chromium the race does not occur. The guard stays as harmless defensive code; Safari/Firefox behaviour is covered only by tests/DEVICE_CHECKLIST.md.
+- Stop reason: two consecutive rounds of remaining notes are device-only (real iPhone/Android Back gestures) or subjective/contradictory (first-visit note weight, outside-tap dismissal). 17 nav gates + 14 check gates pass.
+
