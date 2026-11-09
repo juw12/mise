@@ -28,7 +28,8 @@ Back: the Back button at the top left of every screen, Esc, or your browser / ph
   `js/art.js` illustration, `js/minigames.js` cooking actions, `js/cook.js` cooking session,
   `js/restaurant.js` service simulation, `js/ui.js` screens, `js/main.js` loop and input
 - `tests/check.py` - automated gates (JS errors, every recipe in both views, every role and view, overflow, contrast, no emoji, no purple)
-- `tests/nav_check.py` - navigation gates: back button on every screen, browser/phone Back, Escape, confirm before losing progress
+- `tests/nav_check.py` - navigation gates: back button on every screen, browser/phone Back, Escape, confirm before losing progress (`MISE_ENGINE=webkit` runs them in the Safari engine)
+- `tests/device_emul.py` - the real-device Back checklist played with touch on an emulated iPhone 13 (WebKit) and Pixel 7 (Chromium), portrait and landscape
 - `tests/audio_probe.py` - renders every sound offline through the game's own audio code and checks unlock, levels, loudness window and distinctness; writes a spectrogram sheet
 - `docs/` - screenshots, the frozen judging rubric and the improvement log
 

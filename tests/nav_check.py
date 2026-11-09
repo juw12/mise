@@ -1,6 +1,6 @@
 """Navigation gates for Mise: a visible way back on every screen, browser/phone Back, Escape, no lost progress.
 
-Run:  python tests/nav_check.py [OUT_DIR]
+Run:  python tests/nav_check.py [OUT_DIR]      (MISE_ENGINE=webkit for the Safari engine, chromium for plain Chromium; default Edge)
 Prints one PASS/FAIL line per gate and writes OUT_DIR/nav.json plus a few screenshots.
 Exit 0 only if every gate passes.
 """
@@ -21,6 +21,21 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 gates = {}
 notes = []
+
+
+ENGINE = os.environ.get("MISE_ENGINE", "msedge")  # msedge (default) | chromium | webkit (Safari engine)
+
+
+def launch_browser(pw):
+    # the local test server is on 127.0.0.1: keep it off any system proxy (WebKit honours HTTP(S)_PROXY)
+    for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+        os.environ.pop(key, None)
+    os.environ["NO_PROXY"] = os.environ.get("NO_PROXY", "") + ",127.0.0.1,localhost"
+    if ENGINE == "webkit":
+        return pw.webkit.launch(headless=True)
+    if ENGINE == "chromium":
+        return pw.chromium.launch(headless=True, args=["--autoplay-policy=no-user-gesture-required"])
+    return pw.chromium.launch(headless=True, channel="msedge", args=["--autoplay-policy=no-user-gesture-required"])
 
 
 def gate(name, ok, detail=""):
@@ -101,7 +116,7 @@ def main():
     httpd, url = serve()
     results = {}
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=True, channel="msedge", args=["--autoplay-policy=no-user-gesture-required"])
+        browser = launch_browser(pw)
         errors = []
 
         # ---- N1 visible back control on every non-title screen, desktop and phone

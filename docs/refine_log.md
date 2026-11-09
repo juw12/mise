@@ -183,3 +183,11 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 - Mutation test (honest correction of the nav7 claim): with the history-guard change removed, N2b still passes even with the race forced, so in Chromium the race does not occur. The guard stays as harmless defensive code; Safari/Firefox behaviour is covered only by tests/DEVICE_CHECKLIST.md.
 - Stop reason: two consecutive rounds of remaining notes are device-only (real iPhone/Android Back gestures) or subjective/contradictory (first-visit note weight, outside-tap dismissal). 17 nav gates + 14 check gates pass.
 
+| 2026-11-09 13:28 | council score | 9.85 | split: - | Pega-Vision=x, Pega-Thinking=9.85, GLM-5.3-Flash=x |
+
+
+## nav11 - cross-engine and device-emulated verification (no game changes)
+- `tests/nav_check.py` gained `MISE_ENGINE` (msedge default, chromium, webkit) and keeps loopback traffic off system proxies (a corporate proxy had made WebKit fail to load the page, a harness problem, not a game bug).
+- WebKit (Safari engine): all 17 nav gates pass.
+- New `tests/device_emul.py`: DEVICE_CHECKLIST steps 1-8 with touch taps on an emulated iPhone 13 (WebKit) and Pixel 7 (Chromium), portrait + landscape: 28/28 pass, no JS errors, no overflow.
+- Still only on real phones: the hardware / edge-swipe Back gesture, bfcache, device speaker audio.

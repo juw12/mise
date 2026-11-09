@@ -4,6 +4,12 @@ The automated gates (tests/nav_check.py) run in headless Edge over http and file
 browser Back button with history.back(); they cannot drive a phone's hardware or gesture Back. Run these
 by hand on real devices before calling system Back fully verified.
 
+## What is already automated (2026-11-09)
+
+- `MISE_ENGINE=webkit python tests/nav_check.py`: all 17 navigation gates pass in WebKit (the Safari engine), as well as in Edge (default).
+- `python tests/device_emul.py`: steps 1-8 below played with touch taps on an emulated iPhone 13 (WebKit) and Pixel 7 (Chromium), portrait and landscape: 28/28 pass, no JS errors, no sideways overflow.
+- Both use `history.back()` for system Back. What only a real phone can confirm: the hardware / edge-swipe gesture itself, the browser's own back-forward cache, and audio on the device speaker.
+
 Devices: iPhone (Safari, swipe from the left edge), Android (Chrome, gesture nav and 3-button nav),
 desktop Chrome/Firefox/Safari (Back button and Alt+Left / Cmd+[).
 
