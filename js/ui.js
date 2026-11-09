@@ -447,6 +447,7 @@
     ov.hidden = false;
     paintIcons(ov);
     UI.openStack.push({ id, focus: document.activeElement });
+    UI.syncInert();
     const f = $("button, input", ov);
     if (f) f.focus();
     M.emit("overlay", id);
@@ -459,9 +460,22 @@
     if (i >= 0) {
       const prev = UI.openStack[i].focus;
       UI.openStack.splice(i, 1);
+      UI.syncInert();
       if (prev && prev.focus) prev.focus();
+    } else {
+      UI.syncInert();
     }
     M.emit("overlay", null);
+  };
+  // Only the top dialog can be reached: screens and lower dialogs are inert while it is open.
+  UI.syncInert = function () {
+    const top = UI.topOverlay();
+    $$(".screen").forEach((screen) => {
+      screen.inert = !!top;
+    });
+    $$(".overlay").forEach((ov) => {
+      ov.inert = !ov.hidden && ov.id !== "ov-" + top;
+    });
   };
   UI.topOverlay = function () {
     const o = UI.openStack[UI.openStack.length - 1];
@@ -577,7 +591,15 @@
     });
     $$(".overlay").forEach((ov) =>
       ov.addEventListener("click", (e) => {
-        if (e.target === ov && ov.id !== "ov-result" && ov.id !== "ov-day") {
+        if (e.target === ov && (ov.id === "ov-result" || ov.id === "ov-day")) {
+          // results stay open on a stray tap; a small nudge and the lit note show it is on purpose
+          const sheet = $(".sheet", ov);
+          sheet.classList.remove("is-nudge");
+          void sheet.offsetWidth;
+          sheet.classList.add("is-nudge");
+          return;
+        }
+        if (e.target === ov) {
           if (ov.id === "ov-pause") M.game.action("resume");
           else if (ov.id === "ov-leave") M.game.action("stay");
           else UI.close(ov.id.slice(3));

@@ -142,3 +142,9 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 
 - Judges 9.75 / 10.0 (third judge timed out; 2-judge quorum).
 - Remaining judge notes -> nav6: first-visit note overlaps the recipe card at 1440 px; make background controls inert while a dialog is open (keyboard could reach the dimmed Back); dish leave headline should also cover work inside the current step; give feedback when a tap outside the result/day card is ignored; real-device system-Back check (iOS swipe-back, Android gesture) - not possible here, add a manual checklist.
+| 2026-11-09 11:06 | council score | 9.75 | split: - | Pega-Vision=9.75, Pega-Thinking=10.0, GLM-5.3-Flash=9.7 |
+
+| nav6 | nav5 notes acted on: while a dialog is open everything behind it is inert (no clicks, no Tab; Tab cycles inside the dialog); first-visit Back note moves the recipe card / step rail down instead of covering them; dish leave headline names work inside the current step with 1/many wording; a stray tap outside the dish result / day summary nudges the card and lights its note; manual real-device checklist added (tests/DEVICE_CHECKLIST.md, not yet run on devices) | all pass (nav_check N1-N6 + new N4d; check.py G1-G11) | 9.75 | 3-0 vs nav5 | yes | 3-judge score |
+
+- Judges 9.7 / 9.75 / 10.0 (all three answered this time).
+- Remaining notes -> nav7 (automatable): Pause > Restart day loss-accounting parity test; history anti-trap stress test (repeated title/cookbook cycles, rapid Back); focus-return checks after dialogs close; smaller first-visit note at 320 px. Not automatable here: run tests/DEVICE_CHECKLIST.md on a real iPhone / Android / desktop browsers.

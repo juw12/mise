@@ -464,6 +464,70 @@ def main():
         results["n4c_bad"] = bad6
         gate("N4c one-time Back tip on the first kitchen, hides on first touch, not shown again", not bad6, "; ".join(bad6) or "ok")
 
+        # ---- N4d dialogs own the input: the screen behind is inert, Tab stays inside, a stray tap keeps the result open,
+        #      and the dish leave headline names work inside the current step
+        bad7 = []
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.startHome('salad','first')")
+        page.wait_for_timeout(400)
+        page.mouse.click(640, 420)
+        page.wait_for_timeout(150)
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+        probe = page.evaluate("""() => ({
+          overlay: window.__mise.state().overlay,
+          gameInert: document.getElementById('screen-game').inert,
+          lead: document.getElementById('leave-lead').textContent,
+        })""")
+        if probe["overlay"] != "leave":
+            bad7.append(f"leave dialog did not open after a cut: {probe}")
+        else:
+            if not probe["gameInert"]:
+                bad7.append("kitchen behind the leave dialog is not inert")
+            if "step 1" not in probe["lead"]:
+                bad7.append(f"leave headline does not name the started step: {probe['lead']!r}")
+            outside = False
+            for _ in range(6):
+                page.keyboard.press("Tab")
+                inside = page.evaluate("!!document.activeElement.closest('#ov-leave')")
+                if not inside:
+                    outside = True
+            if outside:
+                bad7.append("Tab moved focus out of the leave dialog")
+            back_clicked = page.evaluate("""() => {
+              const b = document.querySelector('#screen-game [data-back]');
+              const r = b.getBoundingClientRect();
+              const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+              return !!(hit && hit.closest && hit.closest('[data-back]'));
+            }""")
+            if back_clicked:
+                bad7.append("the Back pill behind the dialog can still be hit")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+        # result card: a tap outside keeps it open (and nudges)
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.startHome('salad','first'); window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(200):
+            page.wait_for_timeout(150)
+            if state(page)["overlay"] == "result":
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        if state(page)["overlay"] == "result":
+            page.mouse.click(8, 300)
+            page.wait_for_timeout(120)
+            nudged = page.evaluate("document.querySelector('#ov-result .sheet').classList.contains('is-nudge')")
+            page.wait_for_timeout(250)
+            if state(page)["overlay"] != "result":
+                bad7.append("a tap outside closed the dish result")
+            if not nudged:
+                bad7.append("no nudge feedback on an ignored outside tap")
+            if not page.evaluate("document.getElementById('screen-game').inert"):
+                bad7.append("kitchen behind the dish result is not inert")
+        else:
+            bad7.append("dish result never appeared for N4d")
+        results["n4d_bad"] = bad7
+        gate("N4d dialogs own the input: background inert, Tab stays inside, outside tap keeps results open with a nudge, in-step work named", not bad7, "; ".join(bad7) or "ok")
+
         # ---- N5 file:// still works with history (no SecurityError) and Back from home stays in the game
         fpage = browser.new_page(viewport={"width": 1280, "height": 800})
         ferr = []

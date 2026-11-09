@@ -105,10 +105,15 @@
     const name = s ? s.recipe.name.toLowerCase() : "dish";
     const total = s ? s.recipe.steps.length : 0;
     const done = s ? s.results.length : 0;
-    const lead = done > 0
-      ? "Your " + done + (done === 1 ? " finished step" : " finished steps") + " will be cleared."
-      : "Your work on this step will be cleared.";
-    const detail = "This " + name + " is not finished (" + done + " of " + total + " steps done). " +
+    const current = s ? Math.min(total, s.idx + 1) : 1;
+    const inStep = !!G.stepTouched;
+    const finished = done + (done === 1 ? " finished step" : " finished steps");
+    let lead;
+    if (done > 0 && inStep) lead = "Your " + finished + " and your work on step " + current + " will be cleared.";
+    else if (done > 0) lead = "Your " + finished + " will be cleared.";
+    else lead = "Your work on step " + current + " will be cleared.";
+    const progress = done + " of " + total + " steps done" + (inStep ? ", step " + current + " started" : "");
+    const detail = "This " + name + " is not finished (" + progress + "). " +
       "Home cooking uses no coins or ingredients, and nothing is added to your journal. " +
       "You can cook it again from the cookbook.";
     return { lead, detail };
@@ -190,6 +195,7 @@
     UI.renderTicket(G.session);
     G.paused = false;
     G.touched = false;
+    G.stepTouched = false;
     setBackLabel();
     G.showBackTip();
   };
@@ -205,6 +211,7 @@
     G.restaurant = new M.Restaurant(role, M.profile.settings.camera);
     G.paused = false;
     G.touched = false;
+    G.stepTouched = false;
     setBackLabel();
     G.showBackTip();
   };
@@ -219,8 +226,10 @@
       ? "Back returns to the restaurant. It asks first if anything would be lost."
       : "Back returns to the cookbook. It asks first if anything would be lost.";
     tip.hidden = false;
+    $("#screen-game").classList.add("tip-open");
     const hide = () => {
       tip.hidden = true;
+      $("#screen-game").classList.remove("tip-open");
       clearTimeout(G.backTipTimer);
       window.removeEventListener("pointerdown", hide, true);
       window.removeEventListener("keydown", hide, true);
@@ -297,7 +306,10 @@
     }
   };
 
-  M.on("step", () => UI.renderTicket(G.session || (G.restaurant && G.restaurant.cook)));
+  M.on("step", () => {
+    G.stepTouched = false;
+    UI.renderTicket(G.session || (G.restaurant && G.restaurant.cook));
+  });
   M.on("stepDone", (e) => {
     UI.renderTicket(e.session);
     if (e.q >= 0.85) M.audio.play("success");
@@ -411,7 +423,10 @@
   }
   function route(type, e) {
     if (G.paused || UI.topOverlay()) return;
-    if (type === "down") G.touched = true;
+    if (type === "down") {
+      G.touched = true;
+      G.stepTouched = true;
+    }
     const p = local(e);
     if (G.session) G.session.pointer(G.view, type, p.x, p.y);
     else if (G.restaurant) G.restaurant.pointer(G.view, type, p.x, p.y);
@@ -443,6 +458,7 @@
     if (e.repeat && (e.code === "Space" || e.code === "Enter") && !(G.session && G.session.mg && (G.session.mg instanceof M.MINIGAMES.stir || G.session.mg instanceof M.MINIGAMES.pour))) return;
     M.audio.unlock();
     G.touched = true;
+    G.stepTouched = true;
     if (G.session) G.session.key(e.code, true);
     else if (G.restaurant) G.restaurant.key(e.code, true);
   });

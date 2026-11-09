@@ -517,6 +517,23 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
   border: 6px solid transparent; border-top: 0; border-bottom-color: var(--ink);
 }
 .back-tip[hidden] { display: none; }
+/* while the note shows, the recipe card and step rail step down so nothing is covered */
+#ticket,
+#rail { transition: translate .25s ease; }
+.screen-game.tip-open #ticket,
+.screen-game.tip-open #rail { translate: 0 54px; }
+/* result / day cards: an ignored outside tap gets a small nudge and lights the note */
+@keyframes sheet-nudge {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.015); }
+}
+.sheet.is-nudge { animation: sheet-nudge .28s ease; }
+.sheet.is-nudge .back-hint { background: var(--accent-soft, #F3E3DA); border-color: var(--accent, #B5472B); }
+@media (prefers-reduced-motion: reduce) {
+  #ticket,
+  #rail { transition: none; }
+  .sheet.is-nudge { animation: none; }
+}
 .screen-game.is-narrow .back-tip { top: 58px; left: 8px; }
 .btn-icon:focus-visible { outline: 2px solid var(--accent, #B5472B); outline-offset: 2px; }
 .screen-game.is-narrow .btn-icon[data-back] { padding: 0 8px 0 4px; }
