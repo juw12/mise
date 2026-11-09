@@ -37,13 +37,34 @@ def main():
         for label in ("cooking", "restaurant"):
             hud[(label, width)] = Image.open(ROUND / "hud" / f"hud-{label}-{width}.png").convert("RGB")
 
+    # newer rounds also capture the first-visit Back note and the finished kitchen after Back closes the result
+    if (ROUND / "back-tip.png").exists():
+        first_kitchen = "back-tip"
+        first_caption = "First kitchen, 1440 px: Back pill (arrow + word Back) left of Pause, with the one-time note under it"
+    else:
+        first_kitchen = "cooking-1440"
+        first_caption = "Kitchen top bar, 1440 px: Back pill (arrow + word Back) left of Pause"
+    if (ROUND / "result-closed.png").exists():
+        dialog_row = (
+            [fit(load("result-dialog"), third), fit(load("result-closed"), third), fit(load("day-dialog"), third)],
+            [
+                "Dish result: Back or Esc closes it (stated)",
+                "After Back: finished plate; Back again = cookbook",
+                "Day summary: Back or Esc closes it (stated)",
+            ],
+        )
+    else:
+        dialog_row = (
+            [fit(load("result-dialog"), half), fit(load("day-dialog"), half)],
+            ["Dish result: Back or Esc goes to the cookbook (stated)", "Day summary: Back or Esc opens Manage (stated)"],
+        )
+
     rows = [
-        ([fit(load("cooking-1440"), SHEET_W - 2 * PAD)],
-         ["Kitchen top bar, 1440 px: Back pill (arrow + word Back) left of Pause"]),
+        ([fit(load(first_kitchen), SHEET_W - 2 * PAD)],
+         [first_caption]),
         ([fit(load("leave-confirm-day3"), half), fit(load("leave-confirm-cooking"), half)],
          ["Leave a Day 3 service: exact loss list, reputation undone, hint note", "Leave mid-dish (Esc or Back)"]),
-        ([fit(load("result-dialog"), half), fit(load("day-dialog"), half)],
-         ["Dish result: Back or Esc goes to the cookbook (stated)", "Day summary: Back or Esc opens Manage (stated)"]),
+        dialog_row,
         ([fit(hud[("cooking", 320)], third), fit(hud[("restaurant", 320)], third), fit(load("cooking-320"), 220)],
          ["Top bar at 320 px, cooking", "Top bar at 320 px, service", "Cooking, 320 px"]),
         ([fit(hud[("cooking", 390)], third), fit(hud[("restaurant", 390)], third), fit(load("restaurant-390"), 220)],

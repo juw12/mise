@@ -489,7 +489,35 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
 .hud-title { min-width: 0; }
 .hud-stat b { white-space: nowrap; }
 .back-label { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
-.btn-icon[data-back]:active { transform: translateY(1px); background: var(--line); }
+.btn-icon[data-back] { transition: background-color .15s ease, border-color .15s ease, transform .12s ease; }
+.btn-icon[data-back] .ico { transition: transform .15s ease; }
+.btn-icon[data-back]:hover .ico { transform: translateX(-2px); }
+.btn-icon[data-back]:active { transform: translateY(1px) scale(.97); background: var(--line); }
+@media (prefers-reduced-motion: reduce) {
+  .btn-icon[data-back],
+  .btn-icon[data-back] .ico { transition: none; }
+  .btn-icon[data-back]:hover .ico { transform: none; }
+}
+/* leave dialog: one plain headline of what is lost, then the full list */
+.leave-sub { margin: 8px 0 16px; line-height: 1.45; }
+.leave-lead { display: block; color: var(--ink); font-weight: 600; margin-bottom: 4px; }
+/* one-time note under the Back pill on the first kitchen or service */
+.back-tip {
+  position: absolute; z-index: 5; left: 12px; top: 64px;
+  max-width: min(300px, calc(100% - 24px));
+  margin: 0; padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--ink); color: var(--surface, #FFFDF8);
+  font-size: 13px; font-weight: 500; line-height: 1.4;
+  box-shadow: 0 6px 18px rgba(40, 30, 20, .18);
+  pointer-events: none;
+}
+.back-tip::before {
+  content: ""; position: absolute; left: 22px; top: -6px;
+  border: 6px solid transparent; border-top: 0; border-bottom-color: var(--ink);
+}
+.back-tip[hidden] { display: none; }
+.screen-game.is-narrow .back-tip { top: 58px; left: 8px; }
 .btn-icon:focus-visible { outline: 2px solid var(--accent, #B5472B); outline-offset: 2px; }
 .screen-game.is-narrow .btn-icon[data-back] { padding: 0 8px 0 4px; }
 .screen-game.is-narrow .back-label { font-size: 13px; }

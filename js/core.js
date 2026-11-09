@@ -78,6 +78,7 @@
       camera: "first",
       timeOfDay: "evening",
     },
+    tips: { back: false }, // one-time hints already shown
     home: {
       cooked: {}, // recipeId -> { count, best }
       journal: [], // { recipeId, quality, notes, at }

@@ -80,16 +80,50 @@
     parts.push("Day " + day + " does not count, so you can play it again.");
     return parts.join(" ");
   };
+  // Leave-dialog copy: a short headline of what is lost, then the full list.
+  G.leaveCopy = function () {
+    if (G.mode === "restaurant" && G.restaurant) {
+      const r = G.restaurant;
+      const day = M.profile.shop.day;
+      const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+      // headline: money and the day; detail: everything else, said once
+      const lead = (r.earned > 0
+        ? "The " + M.fmtMoney(r.earned) + " taken today is not paid"
+        : "Nothing has been paid yet today") + ", and Day " + day + " does not count.";
+      const parts = [];
+      const sofar = [];
+      if (r.served > 0) sofar.push(plural(r.served, "table served", "tables served"));
+      if (r.lost > 0) sofar.push(plural(r.lost, "guest left", "guests left"));
+      if (r.tickets.length > 0) sofar.push(plural(r.tickets.length, "order waiting", "orders waiting"));
+      if (sofar.length) parts.push("So far: " + sofar.join(", ") + ".");
+      if (r.served > 0 || r.lost > 0) parts.push("Today's reputation change is undone.");
+      if (r.stockUsed > 0) parts.push(plural(r.stockUsed, "ingredient", "ingredients") + " already used stay used.");
+      parts.push("You can play Day " + day + " again.");
+      return { lead, detail: parts.join(" ") };
+    }
+    const s = G.session;
+    const name = s ? s.recipe.name.toLowerCase() : "dish";
+    const total = s ? s.recipe.steps.length : 0;
+    const done = s ? s.results.length : 0;
+    const lead = done > 0
+      ? "Your " + done + (done === 1 ? " finished step" : " finished steps") + " will be cleared."
+      : "Your work on this step will be cleared.";
+    const detail = "This " + name + " is not finished (" + done + " of " + total + " steps done). " +
+      "Home cooking uses no coins or ingredients, and nothing is added to your journal. " +
+      "You can cook it again from the cookbook.";
+    return { lead, detail };
+  };
   G.requestLeave = function () {
     if (!G.hasProgress()) {
       G.action("quit");
       return;
     }
     const service = G.mode === "restaurant";
+    if (G.hideBackTip) G.hideBackTip();
     $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
-    $("#leave-sub").textContent = service
-      ? G.serviceLeaveText()
-      : "This " + (G.session ? G.session.recipe.name.toLowerCase() : "dish") + " is not finished. Leaving clears it; nothing is added to your journal.";
+    const copy = G.leaveCopy();
+    $("#leave-lead").textContent = copy.lead;
+    $("#leave-detail").textContent = copy.detail;
     $("#btn-stay").textContent = service ? "Keep serving" : "Keep cooking";
     $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
     UI.close("pause");
@@ -102,9 +136,8 @@
     if (top) {
       if (top === "leave") G.action("stay");
       else if (top === "pause") G.resume();
-      else if (top === "result") G.action("cookbook");
-      else if (top === "day") G.action("manage");
       else {
+        // dish result and day summary close too: one level up, back to the finished kitchen or closed floor
         UI.close(top);
         if (UI.current === "game" && !UI.topOverlay()) G.paused = false;
       }
@@ -158,6 +191,7 @@
     G.paused = false;
     G.touched = false;
     setBackLabel();
+    G.showBackTip();
   };
 
   G.startDay = function (role) {
@@ -172,9 +206,33 @@
     G.paused = false;
     G.touched = false;
     setBackLabel();
+    G.showBackTip();
+  };
+
+  // First visit only: a small note under the Back pill, gone after a few seconds or the first touch.
+  G.showBackTip = function () {
+    const tip = $("#back-tip");
+    if (!tip || (M.profile.tips && M.profile.tips.back)) return;
+    M.profile.tips = Object.assign({}, M.profile.tips, { back: true });
+    M.saveProfile();
+    tip.textContent = G.mode === "restaurant"
+      ? "Back returns to the restaurant. It asks first if anything would be lost."
+      : "Back returns to the cookbook. It asks first if anything would be lost.";
+    tip.hidden = false;
+    const hide = () => {
+      tip.hidden = true;
+      clearTimeout(G.backTipTimer);
+      window.removeEventListener("pointerdown", hide, true);
+      window.removeEventListener("keydown", hide, true);
+    };
+    G.hideBackTip = hide;
+    G.backTipTimer = setTimeout(hide, 6000);
+    window.addEventListener("pointerdown", hide, true);
+    window.addEventListener("keydown", hide, true);
   };
 
   G.cleanup = function () {
+    if (G.hideBackTip) G.hideBackTip();
     if (G.session) G.session.destroy();
     if (G.restaurant && !G.restaurant.ended) {
       // an unfinished service does not count: undo its reputation change (ingredients used stay used)
@@ -193,6 +251,7 @@
     if (UI.current !== "game" || G.paused) return;
     G.paused = true;
     M.audio.stopAllLoops();
+    if (G.hideBackTip) G.hideBackTip();
     if (!silent) UI.open("pause");
   };
   G.resume = function () {
@@ -214,6 +273,8 @@
       else G.startDay(M.profile.shop.role || "server");
     } else if (a === "quit") {
       const wasShop = G.mode === "restaurant";
+      // after a finished day, Back lands on Manage, the same place the day summary leads to
+      if (wasShop && G.restaurant && G.restaurant.ended) UI.tab = "upgrades";
       G.cleanup();
       G.mode = null;
       UI.show(wasShop ? "shop" : "home");
@@ -273,13 +334,13 @@
       return;
     }
     if (sess && sess.done) {
-      UI.setHint("", "Plated. Nicely done.", Math.round(sess.quality * 100) + "%");
+      UI.setHint("", "Plated. Nicely done. Back returns to the cookbook.", Math.round(sess.quality * 100) + "%");
       return;
     }
     const rs = G.restaurant;
     if (rs) {
       if (rs.ended) {
-        UI.setHint("", "Closed for the day.", "");
+        UI.setHint("", "Closed for the day. Back opens Manage the restaurant.", "");
         return;
       }
       let text;

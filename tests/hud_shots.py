@@ -19,6 +19,8 @@ with sync_playwright() as pw:
             ("cooking", "window.__mise.startHome('tamagoyaki','first')"),
             ("restaurant", "window.__mise.startDay('server','third')"),
         ]:
+            # the one-time Back note is checked by nav_check N4c; keep it out of these top-bar crops
+            page.evaluate("window.Mise.profile.tips = { back: true }")
             page.evaluate(js)
             page.wait_for_timeout(500)
             page.screenshot(path=str(OUT / f"hud-{label}-{width}.png"), clip={"x": 0, "y": 0, "width": width, "height": 80})

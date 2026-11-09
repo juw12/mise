@@ -308,7 +308,7 @@ def main():
         leave_text = page.evaluate("document.getElementById('leave-sub').textContent")
         results["n3_service_text"] = leave_text
         page.screenshot(path=str(OUT / "leave-confirm-day3.png"))
-        expect = ["Day 3 does not count", "reputation change is undone", "guest left"]
+        expect = ["You can play Day 3 again", "Day 3 does not count", "reputation change is undone", "guest left"]
         if info["served"] >= 1:
             expect.append("served")
         if info["earned"] > 0:
@@ -394,8 +394,20 @@ def main():
             else:
                 back(page)
             s = state(page)
+            if s["screen"] != "game" or s["overlay"]:
+                bad5.append(f"result + {how} gave {s['screen']}/{s['overlay']} (want the dialog closed over the finished kitchen)")
+                continue
+            if how == "escape":
+                page.screenshot(path=str(OUT / "result-closed.png"))
+            # one more Back: the finished dish has nothing to lose, so it goes straight to the cookbook
+            if how == "escape":
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+            else:
+                back(page)
+            s = state(page)
             if s["screen"] != "home" or s["overlay"]:
-                bad5.append(f"result + {how} gave {s['screen']}/{s['overlay']} (want cookbook)")
+                bad5.append(f"finished kitchen + {how} gave {s['screen']}/{s['overlay']} (want cookbook, no question)")
         for how in ("escape", "system"):
             fresh(page, url)
             page.evaluate("window.__mise.startDay('server','third')")
@@ -415,10 +427,42 @@ def main():
             else:
                 back(page)
             s = state(page)
+            if s["screen"] != "game" or s["overlay"]:
+                bad5.append(f"day summary + {how} gave {s['screen']}/{s['overlay']} (want the dialog closed over the closed floor)")
+                continue
+            if how == "escape":
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+            else:
+                back(page)
+            s = state(page)
             if s["screen"] != "shop" or s["overlay"]:
-                bad5.append(f"day summary + {how} gave {s['screen']}/{s['overlay']} (want restaurant)")
+                bad5.append(f"closed floor + {how} gave {s['screen']}/{s['overlay']} (want restaurant, no question)")
         results["n4b_bad"] = bad5
-        gate("N4b dish result and day summary: Esc and system Back both take the stated default (cookbook / restaurant)", not bad5, "; ".join(bad5) or "ok")
+        gate("N4b dish result and day summary: Esc and system Back go one level up (close the dialog), then once more to the cookbook / restaurant", not bad5, "; ".join(bad5) or "ok")
+
+        # ---- N4c one-time Back tip: shown on the first kitchen only, never again, never blocks input
+        bad6 = []
+        fresh(page, url)
+        page.evaluate("window.__mise.startHome('salad','first')")
+        page.wait_for_timeout(400)
+        tip = page.evaluate("(() => { const t = document.getElementById('back-tip'); return t ? { shown: !t.hidden, text: t.textContent, pe: getComputedStyle(t).pointerEvents } : null; })()")
+        if not tip or not tip["shown"] or "Back" not in tip["text"]:
+            bad6.append(f"tip not shown on the first kitchen: {tip}")
+        elif tip["pe"] != "none":
+            bad6.append("tip intercepts taps")
+        else:
+            page.screenshot(path=str(OUT / "back-tip.png"))
+        page.keyboard.press("Space")
+        page.wait_for_timeout(200)
+        if page.evaluate("!document.getElementById('back-tip').hidden"):
+            bad6.append("tip did not hide on the first key press")
+        page.evaluate("window.Mise.game.cleanup(); window.__mise.startHome('salad','first')")
+        page.wait_for_timeout(300)
+        if page.evaluate("!document.getElementById('back-tip').hidden"):
+            bad6.append("tip shown a second time")
+        results["n4c_bad"] = bad6
+        gate("N4c one-time Back tip on the first kitchen, hides on first touch, not shown again", not bad6, "; ".join(bad6) or "ok")
 
         # ---- N5 file:// still works with history (no SecurityError) and Back from home stays in the game
         fpage = browser.new_page(viewport={"width": 1280, "height": 800})

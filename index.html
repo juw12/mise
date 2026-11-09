@@ -170,6 +170,7 @@
         <div class="hud-stats" id="hud-stats"></div>
         <button class="btn-icon hud-btn" id="btn-sound" aria-label="Sound and settings"><span class="ico" data-ico="sound"></span></button>
       </header>
+      <p class="back-tip" id="back-tip" role="status" hidden></p>
       <aside class="ticket" id="ticket" aria-label="Recipe ticket">
         <div class="ticket-head">
           <span class="ticket-no" id="ticket-no">No. 001</span>
@@ -205,7 +206,7 @@
     <div class="overlay" id="ov-leave" role="dialog" aria-modal="true" aria-labelledby="leave-h" aria-describedby="leave-sub" hidden>
       <div class="sheet sheet-sm">
         <h2 id="leave-h">Leave the kitchen?</h2>
-        <p class="muted" id="leave-sub">This dish is not finished yet. Leaving clears it.</p>
+        <p class="leave-sub" id="leave-sub"><strong class="leave-lead" id="leave-lead">Your work on this dish will be cleared.</strong> <span class="muted" id="leave-detail">This dish is not finished yet.</span></p>
         <div class="stack">
           <button class="btn btn-primary btn-block" data-act="stay" id="btn-stay">Keep cooking</button>
           <button class="btn btn-ghost btn-block" data-act="quit" id="btn-leave">Leave</button>
@@ -304,7 +305,7 @@
             <button class="btn btn-primary" data-act="again">Cook it again</button>
             <button class="btn btn-ghost" data-act="cookbook">Back to the cookbook</button>
           </div>
-          <p class="back-hint">Back or Esc also takes you to the cookbook.</p>
+          <p class="back-hint">Back or Esc closes this to show your plate; Back again returns to the cookbook.</p>
         </div>
       </div>
     </div>
@@ -320,7 +321,7 @@
           <button class="btn btn-primary btn-block" data-act="manage">Manage the restaurant</button>
           <button class="btn btn-ghost btn-block" data-act="title">Title screen</button>
         </div>
-        <p class="back-hint">Back or Esc also opens Manage the restaurant.</p>
+        <p class="back-hint">Back or Esc closes this to show the closed floor; Back again opens Manage the restaurant.</p>
       </div>
     </div>
 
