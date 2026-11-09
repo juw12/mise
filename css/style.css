@@ -566,3 +566,34 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
   /* keep "HOME KITCHEN" / "DAY 3" whole: tighter tracking instead of an ellipsis */
   .screen-game.is-narrow .hud-title .kicker { font-size: 10.5px; letter-spacing: .05em; }
 }
+
+/* Back inside the dish result and day summary: the same pill as the top bar, for touch screens without a Back key */
+.sheet-back {
+  display: inline-flex;
+  align-self: flex-start;
+  justify-self: start;
+  width: max-content;
+  align-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 0 12px 0 6px;
+  margin: 0 0 6px -6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .15s ease, transform .12s ease;
+}
+.sheet-back .ico { flex: none; transition: transform .15s ease; }
+.sheet-back:hover .ico { transform: translateX(-2px); }
+.sheet-back:active { transform: translateY(1px) scale(.97); background: var(--line); }
+.sheet-back:focus-visible { outline: 2px solid var(--accent, #B5472B); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet-back,
+  .sheet-back .ico { transition: none; }
+  .sheet-back:hover .ico { transform: none; }
+}

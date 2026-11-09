@@ -266,6 +266,23 @@ with sync_playwright() as pw:
     st = page.evaluate("window.__mise.state()")
     cuts = page.evaluate("(() => { const s = window.Mise.game.session; return s && s.results.length ? 'step done' : (s && s.mg && s.mg.cuts ? s.mg.cuts.length + ' cuts' : 'n/a'); })()")
     gate("G8 keyboard-only play advances a step", st["step"] >= 1, f"step={st['step']} ({cuts})")
+
+    # tap vs hold: a tap jumps exactly onto the next guide; holding the key glides freely
+    page.evaluate("window.Mise.resetProfile(); window.__mise.startHome('salad','first')")
+    page.wait_for_timeout(900)
+    knife_js = "(() => { const mg = window.Mise.game.session.mg; return { x: mg.knifeX, guides: mg.ideal, min: mg.x0 + 8 }; })()"
+    page.keyboard.press("ArrowLeft")
+    page.wait_for_timeout(200)
+    tapped = page.evaluate(knife_js)
+    on_guide = min(abs(tapped["x"] - g) for g in tapped["guides"]) < 1
+    page.keyboard.down("ArrowLeft")
+    page.wait_for_timeout(900)
+    page.keyboard.up("ArrowLeft")
+    page.wait_for_timeout(150)
+    held = page.evaluate(knife_js)
+    glided = tapped["x"] - held["x"] >= 40 or held["x"] <= held["min"] + 1
+    gate("G8b arrow tap lands on a guide; holding the arrow glides the knife", on_guide and glided,
+         f"tap x={tapped['x']:.1f} on_guide={on_guide}; after hold x={held['x']:.1f}")
     results["errors"] += errs
     pass  # ctx left open: closing hangs once WebAudio runs (headless quirk)
 

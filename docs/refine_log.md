@@ -157,3 +157,11 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 - New gates: N2b (history stress), N3b (Pause > Restart day accounting), N4e (keyboard focus in the leave dialog). All 13 nav gates + check.py G1-G11 pass.
 - check.py G8 harness flake traced: the 180 ms synthetic hold reached the page after the 0.28 s glide threshold on a loaded machine. G8 now taps (the documented control). tests/debug_g8.py: 7/7 cuts on the guides at 1x and 6x CPU throttle. A game-side timing change was tried, gave no measurable benefit, and was reverted.
 - Remaining judge notes: run tests/DEVICE_CHECKLIST.md on real phones (needs the user); tool-check dish-leave accounting (coins, ingredients, journal) the way N3b does for service; prove hold-to-glide still works; dialog back affordance; calmer 320 px top bar (subjective).
+| 2026-11-09 12:50 | council score | 9.3 | split: - | Pega-Vision=9.05, Pega-Thinking=10.0, GLM-5.3-Flash=9.3 |
+
+
+## nav8 - kept (council 9.3, judges 9.05-10; pairwise 3-0 over nav7)
+- Dish result and day summary now carry their own Back pill (touch parity on phones without a Back key); dialogs still open on their main choice.
+- New gates: N3c (leaving mid-dish changes no coins, ingredients, journal or cooked counts), N4f (in-dialog Back pill), G8b (arrow tap lands on a guide; holding glides). All 15 nav gates + 14 check gates pass.
+- Judge notes queued for nav9: make the dialog pill identical to the top-bar pill (44 px, destination-style label), confirm Pause > Restart day with exact loss text, first-visit note should not vanish on a timer.
+

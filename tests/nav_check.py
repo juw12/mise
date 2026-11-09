@@ -600,6 +600,101 @@ def main():
         results["n3b"] = {"before": before, "mid": mid, "after": after, "bad": bad9}
         gate("N3b Pause > Restart day: same accounting as leaving (reputation restored, day/coins/history kept, used ingredients stay used)", not bad9, "; ".join(bad9) or "ok")
 
+        # ---- N3c leaving mid-dish keeps the promise in the dialog: no coins, ingredients or journal entry change
+        bad11 = []
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.saveProfile()")
+        snap_js = """() => {
+          const p = window.__mise.M.profile;
+          return {
+            coins: p.shop.coins,
+            stock: Object.values(p.shop.stock).reduce((a, b) => a + b, 0),
+            journal: p.home.journal.length,
+            cooked: JSON.stringify(p.home.cooked),
+          };
+        }"""
+        before_dish = page.evaluate(snap_js)
+        page.evaluate("window.__mise.startHome('salad','first'); window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(120):
+            page.wait_for_timeout(150)
+            if state(page)["step"] >= 1:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        if state(page)["step"] < 1:
+            bad11.append("could not finish a step before leaving")
+        click(page, "#screen-game [data-back]")
+        if state(page)["overlay"] != "leave":
+            bad11.append(f"Back mid-dish gave overlay {state(page)['overlay']} (want the leave question)")
+        else:
+            click(page, "#btn-leave")
+        s = state(page)
+        after_dish = page.evaluate(snap_js)
+        if s["screen"] != "home" or s["overlay"]:
+            bad11.append(f"Leave gave {s['screen']}/{s['overlay']} (want the cookbook)")
+        if after_dish != before_dish:
+            bad11.append(f"profile changed by leaving mid-dish: {before_dish} -> {after_dish}")
+        results["n3c"] = {"before": before_dish, "after": after_dish, "bad": bad11}
+        gate("N3c leaving mid-dish changes nothing the dialog promises to keep (coins, ingredients, journal, cooked counts)", not bad11, "; ".join(bad11) or "ok")
+
+        # ---- N4f a visible Back inside the dish result and day summary (touch screens without a Back key)
+        bad12 = []
+        for kind in ("result", "day"):
+            fresh(page, url)
+            page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.saveProfile()")
+            if kind == "result":
+                page.evaluate("window.__mise.startHome('salad','first'); window.__mise.autoplay(true); window.__mise.speed(6)")
+                for _ in range(240):
+                    page.wait_for_timeout(150)
+                    if state(page)["overlay"] == "result":
+                        break
+                page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+            else:
+                page.evaluate("window.__mise.startDay('server','third')")
+                page.wait_for_timeout(400)
+                page.evaluate("window.Mise.game.restaurant.endDay()")
+                for _ in range(20):
+                    page.wait_for_timeout(150)
+                    if state(page)["overlay"] == "day":
+                        break
+            if state(page)["overlay"] != kind:
+                bad12.append(f"{kind} dialog never appeared")
+                continue
+            page.wait_for_timeout(300)
+            info = page.evaluate("""(kind) => {
+              const ov = document.getElementById('ov-' + kind);
+              const b = ov.querySelector('.sheet-back');
+              const sheet = ov.querySelector('.sheet');
+              if (!b) return null;
+              const r = b.getBoundingClientRect();
+              const s = sheet.getBoundingClientRect();
+              const st = getComputedStyle(b);
+              return {
+                h: r.height, w: r.width, top: r.top - s.top,
+                text: b.textContent.trim(), label: b.getAttribute('aria-label') || '',
+                visible: st.visibility !== 'hidden' && st.display !== 'none' && r.width > 0,
+                focusIsBack: document.activeElement === b,
+                focusAct: document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.act : null,
+              };
+            }""", kind)
+            if not info:
+                bad12.append(f"no Back button inside the {kind} dialog")
+                continue
+            if not info["visible"] or info["h"] < 40 or info["text"] != "Back" or info["w"] > 140:
+                bad12.append(f"{kind} Back not a visible 40 px pill reading Back: {info}")
+            if info["top"] > 90:
+                bad12.append(f"{kind} Back not at the top of the sheet (top offset {info['top']:.0f} px)")
+            if info["focusIsBack"]:
+                bad12.append(f"{kind} dialog opened with focus on Back instead of its main choice")
+            page.locator(f"#ov-{kind} .sheet-back").click()
+            page.wait_for_timeout(350)
+            s = state(page)
+            if s["screen"] != "game" or s["overlay"]:
+                bad12.append(f"{kind} Back gave {s['screen']}/{s['overlay']} (want the dialog closed over the finished kitchen)")
+            if kind == "result":
+                page.screenshot(path=str(OUT / "result-back-closed.png"))
+        results["n4f_bad"] = bad12
+        gate("N4f the dish result and day summary carry their own Back pill (40 px, top of the sheet, not the default focus) that closes the dialog one level up", not bad12, "; ".join(bad12) or "ok")
+
         # ---- N4e focus returns to the control that opened a dialog
         bad10 = []
         fresh(page, url)

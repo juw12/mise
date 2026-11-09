@@ -296,6 +296,7 @@
       <div class="sheet sheet-result">
         <div class="result-art"><img id="result-img" alt=""></div>
         <div class="result-body">
+          <button class="sheet-back" data-act="dialog-back" aria-label="Back: close this and show your plate"><span class="ico" data-ico="back"></span><span>Back</span></button>
           <p class="kicker" id="result-kicker">Plated</p>
           <h2 id="result-h"></h2>
           <p class="result-score"><span id="result-pct"></span><span id="result-word"></span></p>
@@ -305,13 +306,14 @@
             <button class="btn btn-primary" data-act="again">Cook it again</button>
             <button class="btn btn-ghost" data-act="cookbook">Back to the cookbook</button>
           </div>
-          <p class="back-hint">Back or Esc closes this to show your plate; Back again returns to the cookbook.</p>
+          <p class="back-hint">Back (here, Esc or your phone) closes this to show your plate; Back again returns to the cookbook.</p>
         </div>
       </div>
     </div>
 
     <div class="overlay" id="ov-day" role="dialog" aria-modal="true" aria-labelledby="day-h" hidden>
       <div class="sheet sheet-sm">
+        <button class="sheet-back" data-act="dialog-back" aria-label="Back: close this and show the closed floor"><span class="ico" data-ico="back"></span><span>Back</span></button>
         <p class="kicker" id="day-kicker">Closing time</p>
         <h2 id="day-h"></h2>
         <div class="stars" id="day-stars" aria-hidden="true"></div>
@@ -321,7 +323,7 @@
           <button class="btn btn-primary btn-block" data-act="manage">Manage the restaurant</button>
           <button class="btn btn-ghost btn-block" data-act="title">Title screen</button>
         </div>
-        <p class="back-hint">Back or Esc closes this to show the closed floor; Back again opens Manage the restaurant.</p>
+        <p class="back-hint">Back (here, Esc or your phone) closes this to show the closed floor; Back again opens Manage the restaurant.</p>
       </div>
     </div>
 

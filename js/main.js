@@ -272,6 +272,7 @@
   G.action = function (a) {
     M.audio.play("tick");
     if (a === "resume") G.resume();
+    else if (a === "dialog-back") G.back();
     else if (a === "stay") {
       UI.close("leave");
       G.paused = false;

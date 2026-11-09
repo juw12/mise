@@ -448,7 +448,8 @@
     paintIcons(ov);
     UI.openStack.push({ id, focus: document.activeElement });
     UI.syncInert();
-    const f = $("button, input", ov);
+    // the dialog opens on its main choice; the small Back pill at the top is one Tab (or tap) away
+    const f = $("button:not(.sheet-back), input", ov);
     if (f) f.focus();
     M.emit("overlay", id);
   };
