@@ -254,10 +254,12 @@ with sync_playwright() as pw:
     page, errs, ctx = new_page(1280, 800)
     page.evaluate("window.Mise.resetProfile(); window.__mise.startHome('salad','first')")
     page.wait_for_timeout(900)
+    # taps, as the controls say ("Arrow keys jump between guides, Space slices").
+    # A timed key-down/wait/key-up hold was flaky: on a loaded test machine the synthetic key-up
+    # arrived after the 0.28 s glide threshold, so the knife slid off its guide.
     for _ in range(7):
-        page.keyboard.down("ArrowLeft")
-        page.wait_for_timeout(180)
-        page.keyboard.up("ArrowLeft")
+        page.keyboard.press("ArrowLeft")
+        page.wait_for_timeout(120)
         page.keyboard.press("Space")
         page.wait_for_timeout(120)
     page.wait_for_timeout(3000)

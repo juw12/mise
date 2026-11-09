@@ -528,6 +528,121 @@ def main():
         results["n4d_bad"] = bad7
         gate("N4d dialogs own the input: background inert, Tab stays inside, outside tap keeps results open with a nudge, in-step work named", not bad7, "; ".join(bad7) or "ok")
 
+        # ---- N2b history guard under stress: fast title <-> cookbook cycles never trap the player or leave the site early
+        bad8 = []
+        fresh(page, url)
+        for cycle in range(5):
+            page.evaluate("window.Mise.ui.show('home')")
+            page.wait_for_timeout(30)
+            page.locator("#screen-home [data-back]").first.click()
+            # start again before the game's own history.back() has landed
+            page.evaluate("window.Mise.ui.show('home')")
+            page.wait_for_timeout(400)
+            back(page)
+            s = state(page)
+            if s["screen"] != "title":
+                bad8.append(f"cycle {cycle}: system Back from the cookbook gave {s['screen']} (want title)")
+                break
+        # rapid double system Back from the restaurant: one level per press, never past the title
+        page.evaluate("window.Mise.ui.show('shop')")
+        page.wait_for_timeout(300)
+        page.evaluate("history.back(); history.back()")
+        page.wait_for_timeout(700)
+        s = state(page)
+        if s["screen"] != "title":
+            bad8.append(f"double system Back from the restaurant gave {s['screen']}")
+        if not page.url.startswith(url.rstrip("/")):
+            bad8.append(f"left the game: {page.url}")
+        results["n2b_bad"] = bad8
+        gate("N2b history guard holds under fast title/cookbook cycles and a double Back (no trap, never leaves early)", not bad8, "; ".join(bad8) or "ok")
+
+        # ---- N3b Pause > Restart day keeps the same loss accounting as leaving
+        bad9 = []
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.M.profile.shop.day = 3; window.__mise.M.saveProfile()")
+        before = page.evaluate("""() => {
+          const s = window.__mise.M.profile.shop;
+          return { coins: s.coins, history: s.history.length, day: s.day };
+        }""")
+        page.evaluate("window.__mise.startDay('server','third'); window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(120):
+            page.wait_for_timeout(150)
+            if state(page)["day"]["served"] >= 1:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        mid = page.evaluate("""() => {
+          const r = window.Mise.game.restaurant;
+          const s = window.__mise.M.profile.shop;
+          r.lost += 1;
+          s.reputation = Math.max(0, s.reputation - 0.08);
+          const stock = Object.values(s.stock).reduce((a, b) => a + b, 0);
+          return { repStart: r.repStart, used: r.stockUsed, stock };
+        }""")
+        page.evaluate("window.Mise.game.pause(); window.Mise.game.action('restart')")
+        page.wait_for_timeout(400)
+        after = page.evaluate("""() => {
+          const s = window.__mise.M.profile.shop;
+          const r = window.Mise.game.restaurant;
+          return {
+            rep: s.reputation, day: s.day, coins: s.coins, history: s.history.length,
+            stock: Object.values(s.stock).reduce((a, b) => a + b, 0),
+            fresh: !!r && r.served === 0 && r.lost === 0 && r.earned === 0,
+          };
+        }""")
+        if abs(after["rep"] - mid["repStart"]) > 1e-9:
+            bad9.append(f"reputation not restored on restart: {after['rep']} vs {mid['repStart']}")
+        if after["day"] != 3 or after["history"] != before["history"] or after["coins"] != before["coins"]:
+            bad9.append(f"day/history/coins changed on restart: before {before}, after {after}")
+        if mid["used"] > 0 and after["stock"] != mid["stock"]:
+            bad9.append(f"used ingredients changed on restart: {mid['stock']} -> {after['stock']}")
+        if not after["fresh"]:
+            bad9.append("restarted service did not start fresh")
+        results["n3b"] = {"before": before, "mid": mid, "after": after, "bad": bad9}
+        gate("N3b Pause > Restart day: same accounting as leaving (reputation restored, day/coins/history kept, used ingredients stay used)", not bad9, "; ".join(bad9) or "ok")
+
+        # ---- N4e focus returns to the control that opened a dialog
+        bad10 = []
+        fresh(page, url)
+        page.evaluate("window.Mise.profile.tips = { back: true }; window.__mise.startHome('salad','first')")
+        page.wait_for_timeout(400)
+        page.mouse.click(640, 420)
+        page.wait_for_timeout(150)
+        # reach the Back pill the way a keyboard user does: Tab from the page
+        reached = False
+        for _ in range(12):
+            page.keyboard.press("Tab")
+            if page.evaluate("document.activeElement && document.activeElement.id") == "btn-back":
+                reached = True
+                break
+        if not reached:
+            bad10.append("Back pill cannot be reached with Tab in the kitchen")
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(300)
+        if state(page)["overlay"] != "leave":
+            bad10.append("Back pill (Tab + Enter) did not open the leave dialog")
+        else:
+            focused_in = page.evaluate("document.activeElement && document.activeElement.id")
+            if focused_in != "btn-stay":
+                bad10.append(f"leave dialog did not focus Keep cooking first (focus on {focused_in!r})")
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(300)
+            back_to = page.evaluate("document.activeElement && document.activeElement.id")
+            if back_to != "btn-back":
+                bad10.append(f"focus did not return to the Back pill after Keep cooking (on {back_to!r})")
+        # Space on a Tab-focused Pause pauses; Space after a mouse click on the board still cooks
+        for _ in range(12):
+            if page.evaluate("document.activeElement && document.activeElement.id") == "btn-pause":
+                break
+            page.keyboard.press("Tab")
+        page.keyboard.press("Space")
+        page.wait_for_timeout(300)
+        if state(page)["overlay"] != "pause":
+            bad10.append("Space on a Tab-focused Pause did not pause")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
+        results["n4e_bad"] = bad10
+        gate("N4e keyboard focus: the leave dialog opens on the safe choice and focus returns to Back when it closes", not bad10, "; ".join(bad10) or "ok")
+
         # ---- N5 file:// still works with history (no SecurityError) and Back from home stays in the game
         fpage = browser.new_page(viewport={"width": 1280, "height": 800})
         ferr = []

@@ -148,3 +148,12 @@ Sound meets the frozen sound rubric at 8.80 (3-judge council), all gates S1-S5 p
 
 - Judges 9.7 / 9.75 / 10.0 (all three answered this time).
 - Remaining notes -> nav7 (automatable): Pause > Restart day loss-accounting parity test; history anti-trap stress test (repeated title/cookbook cycles, rapid Back); focus-return checks after dialogs close; smaller first-visit note at 320 px. Not automatable here: run tests/DEVICE_CHECKLIST.md on a real iPhone / Android / desktop browsers.
+| 2026-11-09 12:29 | council score | 9.85 | split: - | Pega-Vision=9.2, Pega-Thinking=10.0, GLM-5.3-Flash=9.85 |
+
+## nav7 - kept (council 9.85, judges 9.2-10; pairwise 2-0-1 over nav6)
+- Bug fixed: in the kitchen, Enter/Space on a Tab-focused top-bar button (Back, Pause, Sound) was swallowed as a cooking input. Now a button reached with Tab gets the key; a button that only kept focus after a click hands the key back to the cooking.
+- History guard: re-arming waits for the game's own pending history.back (possible race found by reading the code, not reproduced).
+- Narrow screens: smaller first-visit Back note.
+- New gates: N2b (history stress), N3b (Pause > Restart day accounting), N4e (keyboard focus in the leave dialog). All 13 nav gates + check.py G1-G11 pass.
+- check.py G8 harness flake traced: the 180 ms synthetic hold reached the page after the 0.28 s glide threshold on a loaded machine. G8 now taps (the documented control). tests/debug_g8.py: 7/7 cuts on the guides at 1x and 6x CPU throttle. A game-side timing change was tried, gave no measurable benefit, and was reverted.
+- Remaining judge notes: run tests/DEVICE_CHECKLIST.md on real phones (needs the user); tool-check dish-leave accounting (coins, ingredients, journal) the way N3b does for service; prove hold-to-glide still works; dialog back affordance; calmer 320 px top bar (subjective).

@@ -432,6 +432,7 @@
     else if (G.restaurant) G.restaurant.pointer(G.view, type, p.x, p.y);
   }
   canvas.addEventListener("pointerdown", (e) => {
+    G.tabNav = false;
     M.audio.unlock();
     canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
     route("down", e);
@@ -443,6 +444,11 @@
 
   const GAME_KEYS = ["Space", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") {
+      // the player is moving between controls on purpose
+      G.tabNav = true;
+      return;
+    }
     if (e.key === "Escape") {
       // Escape is Back everywhere: closes a dialog, asks before leaving a kitchen with work in it, goes up a screen.
       G.back();
@@ -451,7 +457,9 @@
     if (UI.current !== "game" || G.paused || UI.topOverlay()) return;
     const tag = (document.activeElement && document.activeElement.tagName) || "";
     if ((e.code === "Space" || e.code === "Enter") && (tag === "BUTTON" || tag === "INPUT")) {
-      // keyboard players keep focus on the canvas region while cooking
+      // a control the player moved to with Tab (Back, Pause, Sound) is pressed normally by Enter / Space
+      if (G.tabNav) return;
+      // a control that merely kept focus (after a click or a screen change) hands the key back to the cooking
       document.activeElement.blur();
     }
     if (GAME_KEYS.includes(e.code)) e.preventDefault();
@@ -459,6 +467,7 @@
     M.audio.unlock();
     G.touched = true;
     G.stepTouched = true;
+    G.tabNav = false;
     if (G.session) G.session.key(e.code, true);
     else if (G.restaurant) G.restaurant.key(e.code, true);
   });
@@ -480,6 +489,8 @@
     return UI.current !== "title" || !!UI.topOverlay();
   }
   function syncHistory() {
+    // our own history.back() is still on its way: re-sync when it lands, never push on top of it
+    if (Hist.skip) return;
     try {
       if (wantsGuard() && !Hist.armed) {
         history.pushState({ mise: 1 }, "");
@@ -497,6 +508,8 @@
   window.addEventListener("popstate", () => {
     if (Hist.skip) {
       Hist.skip = false;
+      // the player may have moved on (e.g. opened the cookbook again) while that back was in flight
+      syncHistory();
       return;
     }
     if (!Hist.armed) return;
@@ -505,7 +518,12 @@
     syncHistory();
   });
   M.on("screen", () => setTimeout(syncHistory, 0));
-  M.on("overlay", () => setTimeout(syncHistory, 0));
+  M.on("overlay", (id) => {
+    // after a dialog closes, focus is handed back for the player's convenience, not chosen with Tab:
+    // the next Space / Enter in the kitchen cooks again
+    if (!id) G.tabNav = false;
+    setTimeout(syncHistory, 0);
+  });
 
   // ---------------------------------------------------------------- test hooks (used by the automated checks)
   window.__mise = {
