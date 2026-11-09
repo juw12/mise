@@ -134,6 +134,44 @@ def main():
         results["back_controls"] = sizes
         gate("N1 visible back control (>=40 px, top bar, word Back shown, no overlap) on home, shop, cooking, restaurant at 1440, 390 and 320 px", not missing, "missing: " + ", ".join(missing) if missing else "all present")
 
+        # ---- N1b every dish and service title fits next to the Back pill on small phones (no ellipsis, no clipped lines)
+        TITLE_JS = """
+        () => {
+          const t = document.querySelector('#screen-game .hud-title');
+          const k = t.querySelector('.kicker');
+          const s = t.querySelector('strong');
+          return {
+            kicker: k.textContent.trim(),
+            title: s.textContent.trim(),
+            kickerCut: k.scrollWidth > k.clientWidth + 1,
+            // a title is cut when a whole line is hidden by the 2-line clamp or it overflows sideways
+            titleCut: s.scrollHeight > s.clientHeight + parseFloat(getComputedStyle(s).lineHeight) * 0.5 || s.scrollWidth > s.clientWidth + 1,
+            descender: s.scrollHeight - s.clientHeight,
+            overflow: document.documentElement.scrollWidth > window.innerWidth,
+          };
+        }
+        """
+        cut = []
+        titles = {}
+        recipes = ["tamagoyaki", "fried_rice", "salad", "ramen", "pancakes", "steak", "tomato_soup", "miso"]
+        for w, h in [(320, 640), (390, 844)]:
+            page = browser.new_page(viewport={"width": w, "height": h})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            fresh(page, url)
+            runs = [("cook", r, f"window.__mise.startHome('{r}','first')") for r in recipes]
+            runs += [("serve", role, f"window.__mise.startDay('{role}','third')") for role in ("chef", "server", "owner")]
+            for kind, key, js in runs:
+                page.evaluate(js)
+                page.wait_for_timeout(250)
+                info = page.evaluate(TITLE_JS)
+                titles[f"{key}@{w}"] = info["kicker"] + " / " + info["title"]
+                if info["kickerCut"] or info["titleCut"] or info["overflow"]:
+                    cut.append(f"{key}@{w}: kicker cut={info['kickerCut']} title cut={info['titleCut']} overflow={info['overflow']}")
+                page.evaluate("window.Mise.game.cleanup && window.Mise.game.cleanup()")
+            page.close()
+        results["titles_small"] = titles
+        gate("N1b every dish (8) and service (3) title and its kicker show in full beside the Back pill at 320 and 390 px", not cut, "; ".join(cut) or "all 22 fit")
+
         # ---- N2 browser / phone Back never leaves the game and goes one level up
         page = browser.new_page(viewport={"width": 1280, "height": 800})
         page.on("pageerror", lambda e: errors.append(str(e)))

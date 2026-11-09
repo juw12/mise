@@ -57,8 +57,8 @@
   G.hasProgress = function () {
     if (G.restaurant) {
       const r = G.restaurant;
-      // a service only has something to lose once orders, sales or player actions exist
-      return !r.ended && (G.touched || r.tickets.length > 0 || r.served > 0 || r.lost > 0 || r.earned > 0);
+      // a service only has something to lose once orders, sales, used ingredients or player actions exist
+      return !r.ended && (G.touched || r.tickets.length > 0 || r.served > 0 || r.lost > 0 || r.earned > 0 || r.stockUsed > 0);
     }
     if (G.session) return !G.session.done && (G.touched || G.session.idx > 0);
     return false;

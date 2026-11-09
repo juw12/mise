@@ -398,7 +398,7 @@ p { margin: 0; }
 .screen-game.is-narrow .hud { padding: 8px 10px; gap: 8px; }
 .screen-game.is-narrow .hud-title .kicker { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .screen-game.is-narrow .k-lead { display: none; }
-.screen-game.is-narrow .hud-title strong { font-size: 16px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.1; }
+.screen-game.is-narrow .hud-title strong { font-size: 16px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.22; }
 .screen-game.is-narrow .hud-stats { gap: 10px; }
 .screen-game.is-narrow .hud-stat b { font-size: 15px; }
 .screen-game.is-narrow .goalbar { width: 70px; }
@@ -516,4 +516,6 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
   .screen-game.is-narrow .hud-stats { gap: 6px; }
   .screen-game.is-narrow .hud-stat span { font-size: 10px; letter-spacing: 0; }
   .screen-game.is-narrow .hud-title strong { font-size: 14.5px; }
+  /* keep "HOME KITCHEN" / "DAY 3" whole: tighter tracking instead of an ellipsis */
+  .screen-game.is-narrow .hud-title .kicker { font-size: 10.5px; letter-spacing: .05em; }
 }
