@@ -484,14 +484,36 @@ input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline
 .sampler .btn { min-height: 34px; padding: 0 12px; font-size: 13.5px; }
 
 /* back control: one pill everywhere, arrow + word, same corner */
-.btn-icon[data-back] { width: auto; min-width: 44px; padding: 0 12px 0 8px; gap: 2px; }
+.btn-icon[data-back] { width: auto; min-width: 44px; padding: 0 12px 0 8px; gap: 2px; flex: none; }
+.btn-icon[data-back] .ico { flex: none; }
+.hud-title { min-width: 0; }
+.hud-stat b { white-space: nowrap; }
 .back-label { font-size: 14px; font-weight: 600; letter-spacing: .01em; }
 .btn-icon[data-back]:active { transform: translateY(1px); background: var(--line); }
 .btn-icon:focus-visible { outline: 2px solid var(--accent, #B5472B); outline-offset: 2px; }
 .screen-game.is-narrow .btn-icon[data-back] { padding: 0 8px 0 4px; }
 .screen-game.is-narrow .back-label { font-size: 13px; }
-.leave-hint { margin: 12px 0 0; font-size: 13px; text-align: center; }
+/* the safe way out of a dialog, said plainly: a soft tinted note under the buttons */
+.leave-hint,
+.back-hint {
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+}
+/* very narrow phones keep the word Back; the pill just tightens */
 @media (max-width: 340px) {
-  .screen-game .back-label { display: none; }
-  .screen-game .btn-icon[data-back] { padding: 0; width: 44px; }
+  .screen-game .btn-icon[data-back] { padding: 0 6px 0 0; gap: 0; }
+  .screen-game .back-label { font-size: 12.5px; }
+  /* win back width so the dish or service name stays readable next to the Back pill */
+  .screen-game.is-narrow .hud { padding: 8px 8px; gap: 6px; }
+  .screen-game.is-narrow .hud-stats { gap: 6px; }
+  .screen-game.is-narrow .hud-stat span { font-size: 10px; letter-spacing: 0; }
+  .screen-game.is-narrow .hud-title strong { font-size: 14.5px; }
 }

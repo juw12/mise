@@ -91,6 +91,7 @@
       this.tips = 0;
       this.served = 0;
       this.lost = 0;
+      this.stockUsed = 0;
       this.qualitySum = 0;
       this.repStart = shop.reputation;
       this.nTables = Math.min(6, 3 + M.upgradeLevel("tables"));
@@ -230,6 +231,7 @@
       const r = M.recipeById(c.order);
       r.stock.forEach((s) => {
         M.profile.shop.stock[s] = Math.max(0, (M.profile.shop.stock[s] || 0) - 1);
+        this.stockUsed += 1;
         // management shows up during service: warn when a category runs low or out
         const left = M.profile.shop.stock[s];
         const label = M.STOCK[s] ? M.STOCK[s].name : s;

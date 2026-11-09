@@ -63,6 +63,23 @@
     if (G.session) return !G.session.done && (G.touched || G.session.idx > 0);
     return false;
   };
+  // Exact consequences of leaving an unfinished service, built from what has happened so far.
+  G.serviceLeaveText = function () {
+    const r = G.restaurant;
+    const day = M.profile.shop.day;
+    const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+    const parts = [];
+    const sofar = [];
+    if (r.served > 0) sofar.push(plural(r.served, "table served", "tables served"));
+    if (r.lost > 0) sofar.push(plural(r.lost, "guest left", "guests left"));
+    if (r.tickets.length > 0) sofar.push(plural(r.tickets.length, "order waiting", "orders waiting"));
+    if (sofar.length) parts.push("So far: " + sofar.join(", ") + ".");
+    parts.push(r.earned > 0 ? "The " + M.fmtMoney(r.earned) + " taken today is not paid." : "Nothing has been paid yet today.");
+    if (r.served > 0 || r.lost > 0) parts.push("Today's reputation change is undone.");
+    if (r.stockUsed > 0) parts.push(plural(r.stockUsed, "ingredient", "ingredients") + " already used stay used.");
+    parts.push("Day " + day + " does not count, so you can play it again.");
+    return parts.join(" ");
+  };
   G.requestLeave = function () {
     if (!G.hasProgress()) {
       G.action("quit");
@@ -71,7 +88,7 @@
     const service = G.mode === "restaurant";
     $("#leave-h").textContent = service ? "Leave the service?" : "Leave the kitchen?";
     $("#leave-sub").textContent = service
-      ? "Leaving ends this service now. Today's takings are not paid and ingredients already used are gone. Day " + M.profile.shop.day + " does not count, so you can play it again."
+      ? G.serviceLeaveText()
       : "This " + (G.session ? G.session.recipe.name.toLowerCase() : "dish") + " is not finished. Leaving clears it; nothing is added to your journal.";
     $("#btn-stay").textContent = service ? "Keep serving" : "Keep cooking";
     $("#btn-leave").textContent = service ? "Leave to the restaurant" : "Leave to the cookbook";
@@ -159,6 +176,11 @@
 
   G.cleanup = function () {
     if (G.session) G.session.destroy();
+    if (G.restaurant && !G.restaurant.ended) {
+      // an unfinished service does not count: undo its reputation change (ingredients used stay used)
+      M.profile.shop.reputation = G.restaurant.repStart;
+      M.saveProfile();
+    }
     if (G.restaurant && G.restaurant.cook) G.restaurant.cook.destroy();
     G.session = null;
     G.restaurant = null;

@@ -20,7 +20,7 @@ A cozy, ASMR-first cooking game: cook at home at your own pace, or run a small r
 ## Controls
 Mouse or touch everywhere. Keyboard: Space / Enter main action, arrows move the knife or change heat, 1-6 act on tables, Q next guest, P pick up from the pickup counter, K cook (owner), Esc pause.
 
-Back: the Back button at the top left of every screen, Esc, or your browser / phone Back button all go one step up (kitchen > cookbook or restaurant > title). Leaving a dish or a service in progress asks first and says exactly what is lost; a dish not started yet or a service where nothing has happened yet just leaves.
+Back: the Back button at the top left of every screen, Esc, or your browser / phone Back button all go one step up (kitchen > cookbook or restaurant > title). Leaving a dish or a service in progress asks first and lists exactly what is lost (tables served or lost, takings, ingredients used); a dish not started yet or a service where nothing has happened yet just leaves. A service you leave does not count: reputation goes back to where the day started and you can play the same day again.
 
 ## Files
 - `index.html`, `css/style.css` - shell and styles (tokens in `design.md`)

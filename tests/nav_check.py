@@ -31,7 +31,9 @@ def gate(name, ok, detail=""):
 def serve():
     handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT))
     handler.log_message = lambda *a: None
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
+    # threaded: an idle keep-alive socket from a closed page must not block the next page load
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    httpd.daemon_threads = True
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd, f"http://127.0.0.1:{httpd.server_address[1]}/index.html"
 
@@ -45,7 +47,26 @@ BACK_JS = """
     const r = b.getBoundingClientRect();
     const cs = getComputedStyle(b);
     if (r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && r.top < 140) {
-      return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), left: Math.round(r.left), label: b.getAttribute('aria-label') || b.textContent.trim() };
+      const word = b.querySelector('.back-label');
+      const wr = word ? word.getBoundingClientRect() : null;
+      const arrow = b.querySelector('.ico');
+      const arrowShown = !!(arrow && arrow.getBoundingClientRect().width >= 12);
+      const wordShown = !!(arrowShown && word && wr.width > 8 && getComputedStyle(word).display !== 'none' && word.textContent.trim() === 'Back');
+      let overlap = null;
+      const bar = b.parentElement;
+      for (const o of bar ? [...bar.parentElement.querySelectorAll('button, .hud-title, h1, h2')] : []) {
+        if (o === b || b.contains(o) || o.contains(b)) continue;
+        const q = o.getBoundingClientRect();
+        if (q.width === 0 || q.height === 0) continue;
+        const ix = Math.min(r.right, q.right) - Math.max(r.left, q.left);
+        const iy = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+        if (ix > 1 && iy > 1) {
+          overlap = (o.id || o.className || o.tagName).toString().slice(0, 40);
+          break;
+        }
+      }
+      if (r.right > window.innerWidth) overlap = 'viewport edge';
+      return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), left: Math.round(r.left), label: b.getAttribute('aria-label') || b.textContent.trim(), word: wordShown, overlap };
     }
   }
   return null;
@@ -86,7 +107,7 @@ def main():
         # ---- N1 visible back control on every non-title screen, desktop and phone
         missing = []
         sizes = {}
-        for w, h in [(1440, 900), (390, 844)]:
+        for w, h in [(1440, 900), (390, 844), (320, 640)]:
             page = browser.new_page(viewport={"width": w, "height": h})
             page.on("pageerror", lambda e: errors.append(str(e)))
             fresh(page, url)
@@ -102,12 +123,16 @@ def main():
                 sizes[f"{label}@{w}"] = b
                 if not b or b["w"] < 40 or b["h"] < 40:
                     missing.append(f"{label}@{w}")
-                if label in ("cooking", "restaurant"):
+                elif not b.get("word"):
+                    missing.append(f"{label}@{w} (arrow or word Back hidden)")
+                elif b.get("overlap"):
+                    missing.append(f"{label}@{w} (overlaps {b['overlap']})")
+                if label in ("cooking", "restaurant") or w == 320:
                     page.screenshot(path=str(OUT / f"{label}-{w}.png"))
                 page.evaluate("window.Mise.game.cleanup && window.Mise.game.cleanup()")
             page.close()
         results["back_controls"] = sizes
-        gate("N1 visible back control (>=40 px, top bar) on home, shop, cooking, restaurant at 1440 and 390 px", not missing, "missing: " + ", ".join(missing) if missing else "all present")
+        gate("N1 visible back control (>=40 px, top bar, word Back shown, no overlap) on home, shop, cooking, restaurant at 1440, 390 and 320 px", not missing, "missing: " + ", ".join(missing) if missing else "all present")
 
         # ---- N2 browser / phone Back never leaves the game and goes one level up
         page = browser.new_page(viewport={"width": 1280, "height": 800})
@@ -219,8 +244,55 @@ def main():
                 bad3.append(f"fresh dish back button gave {s['screen']}/{s['overlay']}")
         else:
             bad3.append("no back button while cooking")
+        # a later day with served AND lost tables: the text names exactly what is lost, and leaving undoes it
+        fresh(page, url)
+        page.evaluate("window.__mise.M.profile.shop.day = 3; window.__mise.M.saveProfile()")
+        history_before = page.evaluate("window.__mise.M.profile.shop.history.length")
+        page.evaluate("window.__mise.startDay('server','third'); window.__mise.autoplay(true); window.__mise.speed(6)")
+        for _ in range(120):
+            page.wait_for_timeout(150)
+            if state(page)["day"]["served"] >= 1:
+                break
+        page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+        # one guest walks out the way the game does it (-0.08 reputation)
+        page.evaluate("""() => {
+          const r = window.Mise.game.restaurant;
+          r.lost += 1;
+          const s = window.__mise.M.profile.shop;
+          s.reputation = Math.max(0, s.reputation - 0.08);
+        }""")
+        info = page.evaluate("""() => {
+          const r = window.Mise.game.restaurant;
+          return { repStart: r.repStart, repNow: window.__mise.M.profile.shop.reputation, served: r.served, lost: r.lost, earned: r.earned, used: r.stockUsed };
+        }""")
+        page.locator("#screen-game [data-back]").first.click()
+        page.wait_for_timeout(300)
+        leave_text = page.evaluate("document.getElementById('leave-sub').textContent")
+        results["n3_service_text"] = leave_text
+        page.screenshot(path=str(OUT / "leave-confirm-day3.png"))
+        expect = ["Day 3 does not count", "reputation change is undone", "guest left"]
+        if info["served"] >= 1:
+            expect.append("served")
+        if info["earned"] > 0:
+            expect.append("is not paid")
+        if info["used"] > 0:
+            expect.append("already used stay used")
+        missing_words = [w for w in expect if w not in leave_text]
+        if missing_words:
+            bad3.append(f"day-3 leave text misses {missing_words}: {leave_text!r}")
+        page.locator("#ov-leave [data-act=quit]").first.click()
+        page.wait_for_timeout(300)
+        after = page.evaluate("""() => {
+          const s = window.__mise.M.profile.shop;
+          return { rep: s.reputation, day: s.day, history: s.history.length };
+        }""")
+        results["n3_service_after"] = {"before": info, "after": after}
+        if abs(after["rep"] - info["repStart"]) > 1e-9:
+            bad3.append(f"reputation not restored: {after['rep']} vs start {info['repStart']} (was {info['repNow']})")
+        if after["day"] != 3 or after["history"] != history_before:
+            bad3.append(f"day/history changed after leaving: {after}")
         results["n3_bad"] = bad3
-        gate("N3 leaving mid-dish or mid-service asks first; Stay keeps progress; Leave returns to the right screen", not bad3, "; ".join(bad3) or "ok")
+        gate("N3 leaving mid-dish or mid-service asks first with exact loss text (any day, served/lost tables); Stay keeps progress; Leave returns to the right screen and the service does not count", not bad3, "; ".join(bad3) or "ok")
 
         # ---- N4 Escape is Back on menu screens and closes overlays
         bad4 = []
@@ -263,6 +335,52 @@ def main():
         if s["overlay"] or s["screen"] != "game" or s["step"] != step_before:
             bad4.append(f"second Escape did not keep cooking: {s['screen']}/{s['overlay']} step {s['step']} vs {step_before}")
         gate("N4 Escape is Back: menus go up, dialogs close, a kitchen with work in it asks first", not bad4, "; ".join(bad4) or "ok")
+
+        # ---- N4b result and day-summary dialogs: on-screen Back button equivalents (Esc, system Back) take the same default step
+        bad5 = []
+        for how in ("escape", "system"):
+            fresh(page, url)
+            page.evaluate("window.__mise.startHome('salad','first'); window.__mise.autoplay(true); window.__mise.speed(6)")
+            for _ in range(200):
+                page.wait_for_timeout(150)
+                if state(page)["overlay"] == "result":
+                    break
+            page.evaluate("window.__mise.autoplay(false); window.__mise.speed(1)")
+            if state(page)["overlay"] != "result":
+                bad5.append(f"dish result never appeared ({how})")
+                continue
+            if how == "escape":
+                page.screenshot(path=str(OUT / "result-dialog.png"))
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+            else:
+                back(page)
+            s = state(page)
+            if s["screen"] != "home" or s["overlay"]:
+                bad5.append(f"result + {how} gave {s['screen']}/{s['overlay']} (want cookbook)")
+        for how in ("escape", "system"):
+            fresh(page, url)
+            page.evaluate("window.__mise.startDay('server','third')")
+            page.wait_for_timeout(400)
+            page.evaluate("window.Mise.game.restaurant.endDay()")
+            for _ in range(20):
+                page.wait_for_timeout(150)
+                if state(page)["overlay"] == "day":
+                    break
+            if state(page)["overlay"] != "day":
+                bad5.append(f"day summary never appeared ({how})")
+                continue
+            if how == "escape":
+                page.screenshot(path=str(OUT / "day-dialog.png"))
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+            else:
+                back(page)
+            s = state(page)
+            if s["screen"] != "shop" or s["overlay"]:
+                bad5.append(f"day summary + {how} gave {s['screen']}/{s['overlay']} (want restaurant)")
+        results["n4b_bad"] = bad5
+        gate("N4b dish result and day summary: Esc and system Back both take the stated default (cookbook / restaurant)", not bad5, "; ".join(bad5) or "ok")
 
         # ---- N5 file:// still works with history (no SecurityError) and Back from home stays in the game
         fpage = browser.new_page(viewport={"width": 1280, "height": 800})
